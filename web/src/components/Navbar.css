@@ -51,6 +51,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
+  margin-left: var(--space-6);
+  margin-right: auto;
 }
 
 .navbar-link {
@@ -95,7 +97,10 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-primary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
+
 
 .pill-divider {
   opacity: 0.25;
