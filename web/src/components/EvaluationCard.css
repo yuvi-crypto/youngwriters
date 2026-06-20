@@ -1,0 +1,222 @@
+/* ── Evaluation Card CSS ── */
+
+.evaluation-card-component {
+  width: 100%;
+}
+
+.eval-visuals-card {
+  padding: var(--space-6);
+  background: var(--bg-card);
+}
+
+.eval-card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  color: var(--color-primary-dark);
+}
+
+.eval-header-icon {
+  font-size: 1.3rem;
+}
+
+.eval-card-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+/* Age 5-7: Early Years (Stars) */
+.eval-early-years {
+  text-align: center;
+  padding: var(--space-4) 0;
+}
+
+.star-display {
+  font-size: 3rem;
+  margin-bottom: var(--space-2);
+  letter-spacing: 0.1em;
+  animation: float 2.5s ease-in-out infinite;
+}
+
+.stars-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-family: var(--font-display);
+}
+
+/* Age 8-12: Middle Years (Circles) */
+.circles-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+  justify-items: center;
+  padding: var(--space-2) 0;
+}
+
+.progress-circle-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.circle-outer {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle-fill {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  transform: rotate(0deg);
+}
+
+.circle-score-text {
+  font-size: 1.3rem;
+}
+
+.circle-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+/* Age 13-17: Teen Years (Bars) */
+.eval-teen-years {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.bar-label-wrap {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+.bar-label {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.bar-score-val {
+  font-weight: 700;
+}
+
+.bar-track {
+  width: 100%;
+  height: 10px;
+  background: var(--bg-input);
+  border-radius: var(--border-radius-pill);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--border-radius-pill);
+  transition: width var(--transition-slow);
+}
+
+/* Strengths chips */
+.eval-strengths-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.strengths-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+}
+
+.strength-icon-header {
+  color: var(--color-accent);
+}
+
+.strengths-title-row h4 {
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.strengths-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.strength-chip {
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--color-accent-glow);
+  color: hsl(160, 75%, 28%);
+  padding: 6px 14px;
+  border-radius: var(--border-radius-pill);
+  border: 1px solid hsla(160, 65%, 46%, 0.15);
+}
+
+/* Callout feedback boxes */
+.eval-feedback-box {
+  border-left: 4px solid var(--color-primary);
+  background: var(--bg-card);
+}
+
+.eval-nudge-box {
+  border-left: 4px solid var(--color-secondary);
+  background: var(--bg-card);
+}
+
+.eval-feedback-box h4,
+.eval-nudge-box h4 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eval-feedback-box p,
+.eval-nudge-box p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  font-style: italic;
+}
+
+.nudge-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-secondary);
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .circles-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+}

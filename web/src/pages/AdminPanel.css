@@ -1,0 +1,296 @@
+/* ── AdminPanel.css ─────────────────────────────────────────── */
+
+.admin-panel {
+  display: flex;
+  min-height: 100vh;
+  background: hsl(258,20%,97%);
+  font-family: 'Nunito', sans-serif;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.admin-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, hsl(258,40%,18%) 0%, hsl(258,40%,12%) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.admin-sidebar-header {
+  padding: 1.5rem 1.25rem 1rem;
+  border-bottom: 1px solid hsla(258,80%,80%,0.12);
+}
+
+.admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.admin-logo > div { display: flex; flex-direction: column; }
+.admin-logo strong { color: white; font-size: 0.95rem; line-height: 1.2; }
+
+.admin-role-chip {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: hsl(160,65%,65%);
+  background: hsla(160,65%,46%,0.15);
+  border: 1px solid hsla(160,65%,46%,0.3);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  margin-top: 0.2rem;
+  align-self: flex-start;
+}
+
+.admin-nav {
+  flex: 1;
+  padding: 0.75rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: hsla(258,60%,90%,0.7);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s ease;
+  width: 100%;
+}
+
+.admin-nav-item:hover {
+  background: hsla(258,80%,80%,0.1);
+  color: white;
+}
+
+.admin-nav-active {
+  background: linear-gradient(135deg, hsl(258,80%,62%), hsl(290,70%,62%)) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px hsla(258,80%,50%,0.3);
+}
+
+.admin-sidebar-footer {
+  padding: 1rem 1rem 1.5rem;
+  border-top: 1px solid hsla(258,80%,80%,0.12);
+}
+
+/* ── Content Area ────────────────────────────────────────────── */
+.admin-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.admin-screen {
+  max-width: 1000px;
+}
+
+.admin-screen-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: hsl(258,40%,20%);
+  margin: 0 0 0.5rem;
+}
+
+.admin-screen-desc {
+  font-size: 0.875rem;
+  color: hsl(258,20%,55%);
+  margin: 0 0 1.5rem;
+  line-height: 1.6;
+}
+
+/* ── Dashboard ───────────────────────────────────────────────── */
+.admin-wcw-card {
+  background: linear-gradient(135deg, hsl(258,80%,62%), hsl(290,70%,62%));
+  border-radius: 20px;
+  padding: 2rem;
+  color: white;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px hsla(258,80%,50%,0.25);
+}
+
+.admin-wcw-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  opacity: 0.85;
+  letter-spacing: 0.04em;
+}
+
+.admin-wcw-value {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin: 0.25rem 0;
+}
+
+.admin-wcw-trend {
+  font-size: 0.9rem;
+  background: hsla(255,100%,100%,0.2);
+  border-radius: 999px;
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  font-weight: 700;
+}
+
+.admin-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-metric-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-shadow: 0 2px 12px hsla(258,30%,40%,0.07);
+}
+
+.admin-metric-emoji { font-size: 1.5rem; }
+.admin-metric-value { font-size: 1.6rem; font-weight: 800; color: hsl(258,40%,20%); }
+.admin-metric-label { font-size: 0.78rem; color: hsl(258,20%,55%); font-weight: 600; }
+
+/* ── Tables ──────────────────────────────────────────────────── */
+.admin-table-wrap {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px hsla(258,30%,40%,0.07);
+  border: 1px solid hsl(258,30%,92%);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.admin-table thead {
+  background: hsl(258,30%,97%);
+  border-bottom: 1px solid hsl(258,30%,90%);
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: hsl(258,30%,50%);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid hsl(258,30%,95%);
+  color: hsl(258,20%,30%);
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-table tbody tr:hover { background: hsl(258,30%,98%); }
+
+.admin-reason-cell {
+  max-width: 260px;
+  color: hsl(258,20%,40%);
+}
+
+/* ── SLA Bar ─────────────────────────────────────────────────── */
+.sla-bar-track {
+  height: 6px;
+  background: hsl(258,20%,90%);
+  border-radius: 3px;
+  overflow: hidden;
+  min-width: 80px;
+}
+
+.sla-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease, background 0.5s ease;
+}
+
+.admin-sla-pct {
+  font-size: 0.75rem;
+  color: hsl(258,20%,55%);
+  display: block;
+  margin-top: 0.2rem;
+}
+
+/* ── Badges ──────────────────────────────────────────────────── */
+.admin-badge {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.admin-badge-red    { background: hsl(0,80%,95%);   color: hsl(0,70%,45%);   border: 1px solid hsl(0,70%,80%);   }
+.admin-badge-amber  { background: hsl(32,95%,95%);  color: hsl(32,90%,40%);  border: 1px solid hsl(32,90%,75%);  }
+.admin-badge-green  { background: hsl(160,65%,93%); color: hsl(160,65%,35%); border: 1px solid hsl(160,65%,70%); }
+.admin-badge-neutral{ background: hsl(258,30%,95%); color: hsl(258,30%,45%); border: 1px solid hsl(258,30%,80%); }
+
+/* ── Schools consent ─────────────────────────────────────────── */
+.admin-consent-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ── Moderation actions ──────────────────────────────────────── */
+.admin-action-cell { display: flex; gap: 0.5rem; align-items: center; }
+
+.admin-approve-btn {
+  color: hsl(160,65%,40%) !important;
+  border-color: hsl(160,65%,70%) !important;
+}
+
+.admin-select {
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid hsl(258,30%,80%);
+  border-radius: 8px;
+  color: hsl(258,20%,30%);
+  background: white;
+  cursor: pointer;
+  outline: none;
+}
+
+.admin-text-muted { color: hsl(258,20%,65%); font-style: italic; }
+
+.btn-xs {
+  padding: 0.25rem 0.65rem !important;
+  font-size: 0.78rem !important;
+  border-radius: 8px !important;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-panel { flex-direction: column; }
+  .admin-sidebar { width: 100%; height: auto; position: relative; }
+  .admin-nav { flex-direction: row; overflow-x: auto; padding: 0.5rem; }
+  .admin-nav-item { white-space: nowrap; }
+}

@@ -1,0 +1,439 @@
+/* ── ImageSprint.css ──────────────────────────────────────── */
+
+.sprint-page {
+  min-height: calc(100vh - 68px);
+  background: linear-gradient(160deg, hsl(258,60%,97%) 0%, hsl(195,50%,96%) 100%);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem 4rem;
+}
+
+/* ── Watch Phase ─────────────────────────────────────────── */
+.sprint-watch-container {
+  max-width: 680px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  animation: fadeInUp 0.4s ease;
+}
+
+.sprint-watch-header {
+  text-align: center;
+}
+
+.sprint-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, hsl(195,85%,55%), hsl(258,80%,62%));
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  margin-bottom: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.sprint-watch-title {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: hsl(258,40%,20%);
+  margin: 0 0 0.5rem;
+}
+
+.sprint-watch-sub {
+  color: hsl(258,20%,55%);
+  font-size: 1.05rem;
+}
+
+.sprint-image-wrap {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px hsla(258,60%,50%,0.18), 0 4px 16px hsla(0,0%,0%,0.08);
+  border: 3px solid white;
+}
+
+.sprint-image-full {
+  width: 100%;
+  max-width: 580px;
+}
+
+.sprint-img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 4/3;
+}
+
+.sprint-watch-overlay {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: hsla(0,0%,0%,0.45);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sprint-watch-ring-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sprint-ring { display: block; }
+
+.sprint-watch-countdown {
+  position: absolute;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Memory toggle */
+.sprint-memory-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: hsl(258,30%,40%);
+}
+
+.sprint-memory-toggle input { display: none; }
+
+.sprint-toggle-track {
+  width: 44px;
+  height: 24px;
+  background: hsl(258,20%,85%);
+  border-radius: 12px;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.2s;
+}
+.sprint-memory-toggle input:checked ~ .sprint-toggle-track {
+  background: hsl(258,80%,62%);
+}
+.sprint-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px hsla(0,0%,0%,0.15);
+}
+.sprint-memory-toggle input:checked ~ .sprint-toggle-track::after {
+  transform: translateX(20px);
+}
+
+.sprint-toggle-label { line-height: 1.4; }
+
+.sprint-badge-hint {
+  display: block;
+  font-size: 0.75rem;
+  color: hsl(258,40%,60%);
+  margin-top: 0.1rem;
+}
+
+.sprint-watch-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sprint-ready-btn {
+  font-size: 1.05rem;
+  padding: 0.85rem 2.5rem;
+}
+
+/* ── Write Phase ─────────────────────────────────────────── */
+.sprint-write-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 160px;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 1100px;
+  align-items: start;
+}
+
+/* Left sidebar */
+.sprint-sidebar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sprint-image-thumb {
+  width: 100%;
+}
+
+.sprint-image-thumb .sprint-img {
+  border-radius: 16px;
+}
+
+.sprint-thumb-label {
+  display: block;
+  text-align: center;
+  font-size: 0.75rem;
+  color: hsl(258,20%,60%);
+  margin-top: 0.5rem;
+}
+
+.sprint-memory-mode-hint {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  background: white;
+  border-radius: 16px;
+  border: 2px dashed hsl(258,50%,80%);
+  color: hsl(258,30%,50%);
+  line-height: 1.6;
+}
+
+.sprint-memory-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+
+/* Center editor */
+.sprint-editor-main {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 4px 24px hsla(258,40%,40%,0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 480px;
+}
+
+.sprint-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid hsl(258,30%,94%);
+}
+
+.sprint-textarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  padding: 1.25rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: hsl(258,20%,25%);
+  min-height: 360px;
+  background: white;
+}
+
+.sprint-textarea::placeholder { color: hsl(258,20%,72%); }
+
+.sprint-editor-footer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid hsl(258,30%,94%);
+  background: hsl(258,30%,98%);
+}
+
+.sprint-word-count {
+  font-size: 0.85rem;
+  color: hsl(258,20%,55%);
+}
+
+.sprint-ready-badge {
+  font-size: 0.8rem;
+  color: hsl(160,65%,40%);
+  font-weight: 700;
+  background: hsl(160,65%,95%);
+  border: 1px solid hsl(160,65%,75%);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+}
+
+.sprint-submit-btn {
+  margin-left: auto;
+}
+
+/* Right sidebar: timer */
+.sprint-sidebar-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.sprint-timer-wrap {
+  background: white;
+  border-radius: 20px;
+  padding: 1.25rem 1rem;
+  box-shadow: 0 4px 20px hsla(258,40%,40%,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sprint-ring-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sprint-timer-label {
+  position: absolute;
+  font-size: 1.1rem;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  color: hsl(258,40%,30%);
+}
+
+.sprint-timer-hint {
+  font-size: 0.72rem;
+  color: hsl(258,20%,60%);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.sprint-pause-btn { width: 100%; }
+.sprint-pause-active { background: hsl(258,80%,62%) !important; color: white !important; }
+
+.sprint-tip-card {
+  background: white;
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 4px 16px hsla(258,40%,40%,0.06);
+  width: 100%;
+}
+
+.sprint-tip-card h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: hsl(258,40%,35%);
+  margin: 0 0 0.6rem;
+}
+
+.sprint-tip-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.sprint-tip-card li {
+  font-size: 0.8rem;
+  color: hsl(258,20%,50%);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.sprint-tip-card li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: hsl(195,85%,55%);
+  font-size: 0.7rem;
+}
+
+/* ── Feedback Phase ──────────────────────────────────────── */
+.sprint-feedback {
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  text-align: center;
+}
+
+.sprint-confetti {
+  font-size: 2.5rem;
+  animation: float 2s ease-in-out infinite;
+}
+
+.sprint-feedback-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: hsl(258,40%,20%);
+  margin: 0;
+}
+
+.sprint-feedback-card {
+  background: white;
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  box-shadow: 0 8px 30px hsla(258,50%,50%,0.12);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: hsl(258,20%,35%);
+  border: 2px solid hsl(258,60%,92%);
+}
+
+.sprint-badge-earned {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, hsl(195,85%,95%), hsl(258,80%,95%));
+  border: 2px solid hsl(195,85%,75%);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  text-align: left;
+}
+
+.sprint-badge-emoji { font-size: 2.5rem; }
+.sprint-badge-earned strong { display: block; font-weight: 800; color: hsl(258,40%,25%); }
+.sprint-badge-earned p { margin: 0.2rem 0 0; font-size: 0.9rem; color: hsl(258,20%,50%); }
+
+.sprint-feedback-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sprint-write-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .sprint-sidebar-left {
+    order: 2;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .sprint-image-thumb { max-width: 200px; }
+
+  .sprint-sidebar-right {
+    order: 1;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .sprint-timer-wrap { flex-direction: row; align-items: center; }
+
+  .sprint-editor-main { order: 3; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
