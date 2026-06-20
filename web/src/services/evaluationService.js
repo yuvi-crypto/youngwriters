@@ -53,22 +53,48 @@ function ruleBasedScore(text, format, age, promptContext) {
   const paragraphs = text.split(/\n\n+/).filter(p => p.trim()).length;
   const avgWordsPerSentence = wordCount / Math.max(sentences, 1);
 
-  // Structure: checks for multi-paragraph, reasonable sentence length
-  const structure = paragraphs >= 3 ? 4
-    : paragraphs >= 2 ? 3
-    : sentences >= 4 ? 2 : 1;
+  let structure;
+  let vocabulary;
+  let creativity;
+  let voice;
 
-  // Vocabulary: unique word ratio
-  const vocabulary = uniqueRatio > 0.7 ? 4
-    : uniqueRatio > 0.55 ? 3
-    : uniqueRatio > 0.4 ? 2 : 1;
+  if (format === 'poem') {
+    const lines = text.split('\n').filter(l => l.trim().length > 0).length;
+    structure = lines >= 6 ? 4 : lines >= 4 ? 3 : lines >= 2 ? 2 : 1;
 
-  // Creativity: length + exclamation/question use + descriptive indicators
-  const hasQuestions = (text.match(/\?/g) || []).length > 0;
-  const hasEmotional = /felt|wonder|magic|dream|suddenly|imagine/i.test(text);
-  const creativity = (wordCount > 100 && hasEmotional) ? 4
-    : (wordCount > 60 && (hasQuestions || hasEmotional)) ? 3
-    : wordCount > 30 ? 2 : 1;
+    vocabulary = (wordCount >= 30 && uniqueRatio > 0.75) ? 4
+      : (wordCount >= 15 && uniqueRatio > 0.65) ? 3 : 2;
+
+    const hasEmotional = /felt|wonder|magic|dream|suddenly|imagine|silent|whisper|sky|heart|shadow/i.test(text);
+    creativity = (wordCount >= 30 && hasEmotional) ? 4
+      : (wordCount >= 15) ? 3 : 2;
+
+    const hasFirstPerson = /\bi\b|\bmy\b|\bme\b/i.test(text);
+    voice = (hasFirstPerson || wordCount > 20) ? 4 : 3;
+  } else {
+    // Structure: checks for multi-paragraph, reasonable sentence length
+    structure = paragraphs >= 3 ? 4
+      : paragraphs >= 2 ? 3
+      : sentences >= 4 ? 2 : 1;
+
+    // Vocabulary: unique word ratio
+    vocabulary = uniqueRatio > 0.7 ? 4
+      : uniqueRatio > 0.55 ? 3
+      : uniqueRatio > 0.4 ? 2 : 1;
+
+    // Creativity: length + exclamation/question use + descriptive indicators
+    const hasQuestions = (text.match(/\?/g) || []).length > 0;
+    const hasEmotional = /felt|wonder|magic|dream|suddenly|imagine/i.test(text);
+    creativity = (wordCount > 100 && hasEmotional) ? 4
+      : (wordCount > 60 && (hasQuestions || hasEmotional)) ? 3
+      : wordCount > 30 ? 2 : 1;
+
+    // Voice: sentence variety + first-person usage
+    const hasFirstPerson = /\bi\b|\bmy\b|\bme\b/i.test(text);
+    const hasVariedLength = avgWordsPerSentence > 6 && avgWordsPerSentence < 25;
+    voice = (hasFirstPerson && hasVariedLength && wordCount > 50) ? 4
+      : (hasFirstPerson || hasVariedLength) ? 3 : 2;
+  }
 
   // Prompt Adherence: simple keyword overlap with prompt
   let promptAdherence = 2; // default middle
@@ -77,12 +103,6 @@ function ruleBasedScore(text, format, age, promptContext) {
     const overlap = words.filter(w => promptWords.has(w.toLowerCase())).length;
     promptAdherence = overlap > 5 ? 4 : overlap > 2 ? 3 : 2;
   }
-
-  // Voice: sentence variety + first-person usage
-  const hasFirstPerson = /\bi\b|\bmy\b|\bme\b/i.test(text);
-  const hasVariedLength = avgWordsPerSentence > 6 && avgWordsPerSentence < 25;
-  const voice = (hasFirstPerson && hasVariedLength && wordCount > 50) ? 4
-    : (hasFirstPerson || hasVariedLength) ? 3 : 2;
 
   const overall = ((structure + vocabulary + creativity + promptAdherence + voice) / 5);
   const overallRounded = Math.round(overall * 2) / 2; // round to 0.5
@@ -125,6 +145,24 @@ export async function evaluatePiece(text, format, age, promptContext = '') {
     try {
       const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
+      let structureDesc = 'Does it have a clear beginning, middle, end? Does it flow logically?';
+      let vocabularyDesc = 'Word variety, precise or evocative word choices?';
+      let voiceDesc = 'Personality, authenticity, does it sound like a real child?';
+
+      if (format === 'poem') {
+        structureDesc = 'Line breaks, layout, rhythm, stanzas, and musical flow instead of narrative structure.';
+        vocabularyDesc = 'Imagery, sound patterns (rhyme, alliteration), word economy, and precise emotional word choices.';
+        voiceDesc = 'Emotional resonance, mood, authentic self-expression, and personal poetic style.';
+      } else if (format === 'essay') {
+        structureDesc = 'Clear introduction/thesis statement, body paragraphs supporting the claim, and a conclusion. Logical transitions.';
+        vocabularyDesc = 'Clarity of explanation, informative or argumentative vocabulary, and formal/academic word variety.';
+        voiceDesc = 'Author\'s confidence, stance, logic, and persuasive tone.';
+      } else if (format === 'opinion') {
+        structureDesc = 'Clear statement of the opinion, clear supporting reasons, and acknowledgment/response to the opposing viewpoint ("See the Other Side").';
+        vocabularyDesc = 'Persuasive vocabulary, transitions (e.g., "however", "therefore"), and logical clarity.';
+        voiceDesc = 'Conviction, individual perspective, and reasoning logic.';
+      }
+
       const systemPrompt = `You are an expert children's writing evaluator for the Young Writers Platform.
 Evaluate this ${format} written by a ${age}-year-old student.
 
@@ -132,11 +170,11 @@ RUBRIC (score each dimension 1-4, half-points allowed e.g. 2.5):
 1=Starting Out, 2=Building Up, 3=Shining, 4=Superstar
 
 DIMENSIONS:
-- structure: Does it have a clear beginning, middle, end? Does it flow logically?
-- vocabulary: Word variety, precise or evocative word choices?
+- structure: ${structureDesc}
+- vocabulary: ${vocabularyDesc}
 - creativity: Originality, unexpected details or ideas?
 - prompt_adherence: Did it address the prompt "${promptContext || 'free writing'}"?
-- voice: Personality, authenticity, does it sound like a real child?
+- voice: ${voiceDesc}
 
 IMPORTANT RULES:
 - NEVER mention grammar, spelling, or punctuation errors

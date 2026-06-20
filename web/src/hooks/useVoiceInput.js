@@ -40,6 +40,7 @@ export function useVoiceInput({ language = 'en', format = 'story', onTranscript 
   );
   const [permissionDenied, setPermissionDenied] = useState(false);
   const recognitionRef = useRef(null);
+  const shouldListenRef = useRef(false);
   const startTimeRef = useRef(null);
 
   // TODO (cloud STT): When VITE_USE_CLOUD_STT=true, send audio chunks to
@@ -53,12 +54,13 @@ export function useVoiceInput({ language = 'en', format = 'story', onTranscript 
   const startListening = useCallback(() => {
     if (!isSupported) return;
 
+    shouldListenRef.current = true;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = LANG_MAP[language] || 'en-IN';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
-    recognition.continuous = false;
+    recognition.continuous = true;
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -66,10 +68,15 @@ export function useVoiceInput({ language = 'en', format = 'story', onTranscript 
     };
 
     recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      // Append to existing content with a space separator
-      if (onTranscript && transcript) {
-        onTranscript((prev) => (prev ? `${prev} ${transcript}` : transcript));
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' ';
+        }
+      }
+      
+      if (onTranscript && finalTranscript.trim()) {
+        onTranscript((prev) => (prev ? `${prev} ${finalTranscript.trim()}` : finalTranscript.trim()));
       }
 
       // Mixpanel: raw audio already discarded by this point (browser-handled)
@@ -80,15 +87,24 @@ export function useVoiceInput({ language = 'en', format = 'story', onTranscript 
     };
 
     recognition.onerror = (event) => {
+      console.warn('[VoiceInput] Error: ', event.error);
       if (event.error === 'not-allowed') {
         setPermissionDenied(true);
         setIsSupported(false); // Treat as unsupported for this session
+        shouldListenRef.current = false;
       }
-      setIsListening(false);
     };
 
     recognition.onend = () => {
-      setIsListening(false);
+      if (shouldListenRef.current) {
+        try {
+          recognition.start();
+        } catch (e) {
+          console.warn('[VoiceInput] Auto-restart failed: ', e.message);
+        }
+      } else {
+        setIsListening(false);
+      }
     };
 
     recognitionRef.current = recognition;
@@ -96,6 +112,7 @@ export function useVoiceInput({ language = 'en', format = 'story', onTranscript 
   }, [isSupported, language, format, onTranscript]);
 
   const stopListening = useCallback(() => {
+    shouldListenRef.current = false;
     recognitionRef.current?.stop();
     setIsListening(false);
   }, []);
