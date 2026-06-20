@@ -83,29 +83,23 @@
   gap: var(--space-2);
 }
 
-.navbar-xp {
+.navbar-progress-pill {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 0.3em 0.8em;
-  background: linear-gradient(135deg, hsla(42,95%,55%,0.15), hsla(32,95%,58%,0.15));
-  border: 1px solid hsla(42,95%,55%,0.3);
+  gap: 8px;
+  padding: 0.35em 0.9em;
+  background: linear-gradient(135deg, hsla(258,80%,62%,0.08), hsla(290,70%,62%,0.08));
+  border: 1px solid hsla(258,80%,62%,0.18);
   border-radius: var(--border-radius-pill);
   font-family: var(--font-display);
   font-size: 0.8rem;
   font-weight: 700;
-  color: hsl(32, 80%, 40%);
+  color: var(--text-primary);
 }
 
-.navbar-badges-count {
-  padding: 0.3em 0.8em;
-  background: var(--color-primary-glow);
-  border: 1px solid hsla(258,80%,62%,0.2);
-  border-radius: var(--border-radius-pill);
-  font-family: var(--font-display);
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--color-primary-dark);
+.pill-divider {
+  opacity: 0.25;
+  font-weight: 400;
 }
 
 .navbar-icon-btn {
@@ -190,7 +184,37 @@
   margin-top: var(--space-2);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .hide-mobile { display: none !important; }
   .show-mobile { display: flex !important; }
 }
+
+@media (min-width: 1025px) and (max-width: 1200px) {
+  .navbar-inner {
+    padding: 0 var(--space-3);
+    gap: 8px;
+  }
+  .navbar-logo-text {
+    font-size: 1.05rem;
+  }
+  .navbar-logo-emoji {
+    font-size: 1.3rem;
+  }
+  .navbar-links {
+    gap: 4px;
+  }
+  .navbar-link {
+    padding: 0.35em 0.6em;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+  .navbar-right {
+    gap: 6px;
+  }
+  .navbar-progress-pill {
+    padding: 0.3em 0.7em;
+    font-size: 0.75rem;
+    gap: 6px;
+  }
+}
+

@@ -65,26 +65,19 @@ export default function Navbar() {
 
         {/* Right side */}
         <div className="navbar-right">
-          {/* XP pill */}
-          <div className="navbar-xp hide-mobile">
-            <span>⚡</span>
-            <span>{xp} XP</span>
+          {/* Progress Pill */}
+          <div className="navbar-progress-pill hide-mobile">
+            <span>⚡ {xp} XP</span>
+            {badges.length > 0 && (
+              <>
+                <span className="pill-divider">|</span>
+                <span>🏅 {badges.length}</span>
+              </>
+            )}
           </div>
 
-          {/* Badges count */}
-          {badges.length > 0 && (
-            <div className="navbar-badges-count hide-mobile">
-              🏅 {badges.length}
-            </div>
-          )}
-
-          {/* Settings */}
-          <Link to="/settings" className="navbar-icon-btn" title="Settings">
-            <FiSettings size={18} />
-          </Link>
-
           {/* Avatar */}
-          <button className="navbar-avatar" onClick={() => navigate('/settings')}>
+          <button className="navbar-avatar" onClick={() => navigate('/settings')} title="Settings & Profile">
             {initials}
           </button>
 

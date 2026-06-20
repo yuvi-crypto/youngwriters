@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuthStore, useAppStore } from '../store';
-import { trackBadgeEarned, trackBadgeEarned as trackBadge } from '../analytics';
+import { trackBadgeEarned } from '../analytics';
 import { generateFeedback } from '../aiService';
 import toast from 'react-hot-toast';
 import {
@@ -24,53 +24,53 @@ import './Lab.css';
 const DICE_POOLS = {
   easy: {
     characters: [
-      { name: 'Friendly Dragon 🐉', text: 'a friendly dragon who is afraid of fire' },
-      { name: 'Helper Robot 🤖', text: 'a helpful household robot who loves cooking' },
-      { name: 'Talking Puppy 🐶', text: 'a playful puppy who can speak to birds' }
+      { name: 'Friendly Dragon 🐉', text: 'a friendly dragon who is afraid of fire', emoji: '🐉' },
+      { name: 'Helper Robot 🤖', text: 'a helpful household robot who loves cooking', emoji: '🤖' },
+      { name: 'Talking Puppy 🐶', text: 'a playful puppy who can speak to birds', emoji: '🐶' }
     ],
     locations: [
-      { name: 'Treehouse 🏠', text: 'a multi-story treehouse high in a giant redwood' },
-      { name: 'Candy Island 🍭', text: 'a colorful island where the rivers are milkshakes' },
-      { name: 'Magic Forest 🌲', text: 'a glowing forest where trees whisper secrets' }
+      { name: 'Treehouse 🏠', text: 'a multi-story treehouse high in a giant redwood', emoji: '🏠' },
+      { name: 'Candy Island 🍭', text: 'a colorful island where the rivers are milkshakes', emoji: '🍭' },
+      { name: 'Magic Forest 🌲', text: 'a glowing forest where trees whisper secrets', emoji: '🌲' }
     ],
     problems: [
-      { name: 'Lost Toy 🧸', text: 'they lost their favorite teddy bear' },
-      { name: 'Forgot the Way 🗺️', text: 'they forgot how to get back home' },
-      { name: 'Stuck Zipper 🧥', text: 'their winter jacket zipper gets stuck closed' }
+      { name: 'Lost Toy 🧸', text: 'they lost their favorite teddy bear', emoji: '🧸' },
+      { name: 'Forgot the Way 🗺️', text: 'they forgot how to get back home', emoji: '🗺️' },
+      { name: 'Stuck Zipper 🧥', text: 'their winter jacket zipper gets stuck closed', emoji: '🧥' }
     ]
   },
   medium: {
     characters: [
-      { name: 'Astronaut 👨‍🚀', text: 'a brave astronaut on their first space walk' },
-      { name: 'Deep-sea Diver 🤿', text: 'a marine biologist exploring the twilight zone' },
-      { name: 'Archaeologist 🤠', text: 'a history professor searching for lost temples' }
+      { name: 'Astronaut 👨‍🚀', text: 'a brave astronaut on their first space walk', emoji: '👨‍🚀' },
+      { name: 'Deep-sea Diver 🤿', text: 'a marine biologist exploring the twilight zone', emoji: '🤿' },
+      { name: 'Archaeologist 🤠', text: 'a history professor searching for lost temples', emoji: '🤠' }
     ],
     locations: [
-      { name: 'Underwater City 🏙️', text: 'a glass-domed city at the bottom of the ocean' },
-      { name: 'Floating Castle 🏰', text: 'a stone castle floating high above the clouds' },
-      { name: 'Dinosaur Jungle 🦖', text: 'a prehistoric valley forgotten by time' }
+      { name: 'Underwater City 🏙️', text: 'a glass-domed city at the bottom of the ocean', emoji: '🏙️' },
+      { name: 'Floating Castle 🏰', text: 'a stone castle floating high above the clouds', emoji: '🏰' },
+      { name: 'Dinosaur Jungle 🦖', text: 'a prehistoric valley forgotten by time', emoji: '🦖' }
     ],
     problems: [
-      { name: 'No Signal 📡', text: 'their communication device stops working' },
-      { name: 'Broken Compass 🧭', text: 'their navigation compass points in circles' },
-      { name: 'Strange Footprint 👣', text: 'they discover a massive, unknown footprint' }
+      { name: 'No Signal 📡', text: 'their communication device stops working', emoji: '📡' },
+      { name: 'Broken Compass 🧭', text: 'their navigation compass points in circles', emoji: '🧭' },
+      { name: 'Strange Footprint 👣', text: 'they discover a massive, unknown footprint', emoji: '👣' }
     ]
   },
   teen: {
     characters: [
-      { name: 'AI Scientist 💻', text: 'a computer scientist building a sentient AI' },
-      { name: 'Time Traveler ⏳', text: 'a historian stuck in the wrong decade' },
-      { name: 'Secret Agent 🕵️', text: 'a field agent decrypting a compromised drive' }
+      { name: 'AI Scientist 💻', text: 'a computer scientist building a sentient AI', emoji: '💻' },
+      { name: 'Time Traveler ⏳', text: 'a historian stuck in the wrong decade', emoji: '⏳' },
+      { name: 'Secret Agent 🕵️', text: 'a field agent decrypting a compromised drive', emoji: '🕵️' }
     ],
     locations: [
-      { name: 'Cyberpunk Alley 🌆', text: 'a neon-drenched alleyway in Neo-Hyderabad' },
-      { name: 'Mars Colony 🚀', text: 'a research dome on the dusty red plains of Mars' },
-      { name: 'Forgotten Library 📚', text: 'a underground vault containing ancient books' }
+      { name: 'Cyberpunk Alley 🌆', text: 'a neon-drenched alleyway in Neo-Hyderabad', emoji: '🌆' },
+      { name: 'Mars Colony 🚀', text: 'a research dome on the dusty red plains of Mars', emoji: '🚀' },
+      { name: 'Forgotten Library 📚', text: 'a underground vault containing ancient books', emoji: '📚' }
     ],
     problems: [
-      { name: 'Memory Leak 💾', text: 'the AI system starts losing its oldest memories' },
-      { name: 'Time Fracture ⏱️', text: 'a rift causes the last 5 minutes to repeat over and over' },
-      { name: 'Security Breach 🔐', text: 'a firewall alert shows a remote breach in progress' }
+      { name: 'Memory Leak 💾', text: 'the AI system starts losing its oldest memories', emoji: '💾' },
+      { name: 'Time Fracture ⏱️', text: 'a rift causes the last 5 minutes to repeat over and over', emoji: '⏱️' },
+      { name: 'Security Breach 🔐', text: 'a firewall alert shows a remote breach in progress', emoji: '🔐' }
     ],
     emotions: ['Anxiety', 'Excitement', 'Guilt'],
     twists: [
@@ -81,6 +81,10 @@ const DICE_POOLS = {
     themes: ['Legacy', 'Identity', 'Sacrifice']
   }
 };
+
+const RANDOM_CHAR_EMOJIS = ['🐉', '🤖', '🐶', '👨‍🚀', '🤿', '🤠', '💻', '⏳', '🕵️', '🦊', '🦄', '🧙'];
+const RANDOM_LOC_EMOJIS = ['🏠', '🍭', '🌲', '🏙️', '🏰', '🦖', '🌆', '🚀', '📚', '🌋', '🛸', '🎪'];
+const RANDOM_PROB_EMOJIS = ['🧸', '🗺️', '🧥', '📡', '🧭', '👣', '💾', '⏱️', '🔐', '🔑', '⛈️', '🎈'];
 
 // ── MYSTERY CASES ───────────────────────────────────────────
 const MYSTERIES = [
@@ -163,17 +167,40 @@ const STORY_CARDS_INITIAL = [
   { id: 'D', role: 'Resolution', content: 'The trapdoor clicked open, revealing a chest of hand-written journals from 1920.' }
 ];
 
+// ── PERSPECTIVE SWITCH SCENARIOS ──────────────────────────────
+const PERSPECTIVE_SCENARIOS = [
+  {
+    title: 'The Forgotten Homework',
+    narrative: 'Charlie arrived at school and realized his math folder was left on the dining table. He froze as the teacher approached to collect it...',
+    perspectives: [
+      { id: 'teacher', role: 'Mrs. Gable (Strict Teacher)', avatar: '👩‍🏫', hint: 'Write about keeping classroom rules, responsibility, but also describe your feelings if you notice Charlie\'s pale face.' },
+      { id: 'mother', role: 'Charlie\'s Mom', avatar: '👩', hint: 'You just found the math folder on the dining table. Rushing to the car, you get caught in a traffic jam.' },
+      { id: 'dog', role: 'Buster (Family Dog)', avatar: '🐶', hint: 'The paper smells like pencil and bacon. You decided it makes a great chew toy under the sofa.' }
+    ]
+  },
+  {
+    title: 'The Giant Pumpkin Heist',
+    narrative: 'Grandma won 1st prize at the village fair for her massive pumpkin. But at midnight, the pumpkin vanished from the display stand...',
+    perspectives: [
+      { id: 'grandma', role: 'Grandma Clara', avatar: '👩‍🌾', hint: 'Heartbroken and furious! You worked all summer on it. You suspect rival farmer Pete.' },
+      { id: 'ribbon', role: 'The Gold Ribbon', avatar: '🏆', hint: 'You are left hanging on the empty stand. Tell what you saw at midnight—footprints, shadows, and weird slime.' },
+      { id: 'raccoon', role: 'Rocky the Raccoon', avatar: '🦝', hint: 'Explain the details of your master pumpkin heist with your forest buddies.' }
+    ]
+  }
+];
+
 export default function Lab() {
   const { profile } = useAuthStore();
   const { addXP, awardBadge, addPiece } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | dice | mystery | fallacy | structure
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | dice | mystery | fallacy | structure | perspective
 
   // ── STORY DICE STATE ──
   const [complexity, setComplexity] = useState('medium');
   const [diceRolled, setDiceRolled] = useState(false);
   const [rolling, setRolling] = useState(false);
   const [rolledData, setRolledData] = useState(null);
+  const [cycleEmojis, setCycleEmojis] = useState({ char: '❓', loc: '❓', prob: '❓' });
   const [storyTitle, setStoryTitle] = useState('');
   const [storyContent, setStoryContent] = useState('');
   const [diceFeedback, setDiceFeedback] = useState('');
@@ -197,13 +224,33 @@ export default function Lab() {
   const [puzzleChecked, setPuzzleChecked] = useState(false);
   const [puzzleSuccess, setPuzzleSuccess] = useState(false);
 
-  // ── ROLL DICE HANDLER ──
+  // ── PERSPECTIVE SWITCH STATE ──
+  const [scenarioIndex, setScenarioIndex] = useState(0);
+  const [selectedPerspId, setSelectedPerspId] = useState('');
+  const [perspContent, setPerspContent] = useState('');
+  const [perspSubmitted, setPerspSubmitted] = useState(false);
+  const [perspFeedback, setPerspFeedback] = useState('');
+  const [submittingPersp, setSubmittingPersp] = useState(false);
+
+  // ── ROLL DICE HANDLER (Animated Slot-Machine) ──
   const rollDice = () => {
     setRolling(true);
     setDiceFeedback('');
     setStoryContent('');
     setStoryTitle('');
+    setDiceRolled(false);
+
+    // Emojis cycling intervals
+    const interval = setInterval(() => {
+      setCycleEmojis({
+        char: RANDOM_CHAR_EMOJIS[Math.floor(Math.random() * RANDOM_CHAR_EMOJIS.length)],
+        loc: RANDOM_LOC_EMOJIS[Math.floor(Math.random() * RANDOM_LOC_EMOJIS.length)],
+        prob: RANDOM_PROB_EMOJIS[Math.floor(Math.random() * RANDOM_PROB_EMOJIS.length)]
+      });
+    }, 80);
+
     setTimeout(() => {
+      clearInterval(interval);
       const pool = DICE_POOLS[complexity];
       const randomChar = pool.characters[Math.floor(Math.random() * pool.characters.length)];
       const randomLoc = pool.locations[Math.floor(Math.random() * pool.locations.length)];
@@ -221,10 +268,15 @@ export default function Lab() {
         data.theme = pool.themes[Math.floor(Math.random() * pool.themes.length)];
       }
 
+      setCycleEmojis({
+        char: randomChar.emoji || '🐉',
+        loc: randomLoc.emoji || '🏠',
+        prob: randomProb.emoji || '🧸'
+      });
       setRolledData(data);
       setDiceRolled(true);
       setRolling(false);
-    }, 1000);
+    }, 1200);
   };
 
   // ── SUBMIT DICE STORY ──
@@ -247,14 +299,11 @@ export default function Lab() {
         updatedAt: new Date().toISOString()
       };
 
-      // Add to store
       addPiece(savedPiece);
 
-      // Generate AI feedback using the generic gemini hook or mock encouraging feedback
       const aiFeedback = await generateFeedback(storyContent, 'story', profile?.age || 12);
       setDiceFeedback(aiFeedback);
 
-      // Award XP
       addXP(50);
       awardBadge({
         id: 'story_dicemaster',
@@ -349,6 +398,55 @@ export default function Lab() {
     setPuzzleSuccess(false);
   };
 
+  // ── PERSPECTIVE SUBMIT HANDLER ──
+  const submitPerspective = async (e) => {
+    e.preventDefault();
+    if (!perspContent.trim() || !selectedPerspId) return;
+
+    setSubmittingPersp(true);
+    try {
+      const scenario = PERSPECTIVE_SCENARIOS[scenarioIndex];
+      const character = scenario.perspectives.find(p => p.id === selectedPerspId);
+      
+      const savedPiece = {
+        id: crypto.randomUUID(),
+        authorId: profile?.uid || 'anonymous',
+        type: 'story',
+        title: `${scenario.title} (${character.role})`,
+        content: perspContent,
+        language: profile?.language || 'en',
+        status: 'private',
+        wordCount: perspContent.trim().split(/\s+/).filter(Boolean).length,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      addPiece(savedPiece);
+
+      // Call AI coach feedback helper
+      const aiFeedback = await generateFeedback(
+        `[Perspective: ${character.role}] Original Scenario: ${scenario.narrative} Writing: ${perspContent}`,
+        'story',
+        profile?.age || 12
+      );
+      setPerspFeedback(aiFeedback);
+
+      addXP(40);
+      awardBadge({
+        id: 'perspective_master',
+        name: 'Perspective Master 🎭',
+        emoji: '🎭',
+        desc: 'Adopted alternative character viewpoints in the Lab!'
+      });
+      toast.success('Excellent perspective writing! +40 XP & Badge Earned!');
+      setPerspSubmitted(true);
+    } catch (err) {
+      toast.error('Failed to submit. Draft saved.');
+    } finally {
+      setSubmittingPersp(false);
+    }
+  };
+
   return (
     <div className="lab-page container">
       {/* ─── Back Button (Sub-Activities) ─── */}
@@ -371,7 +469,7 @@ export default function Lab() {
 
           <div className="lab-clusters">
             {/* Cluster A */}
-            <div className="lab-cluster-card">
+            <div className="lab-cluster-card animate-slide-up">
               <div className="cluster-header">
                 <span className="cluster-emoji">🌌</span>
                 <h3>Creative Story Catalyst</h3>
@@ -382,7 +480,7 @@ export default function Lab() {
                   <span className="btn-icon">🎲</span>
                   <div className="btn-info">
                     <strong>Story Dice Roller</strong>
-                    <span>Generate random plot parameters & draft a story</span>
+                    <span>Roll plot parameters & draft a story</span>
                   </div>
                   <span className="btn-arrow">→</span>
                 </button>
@@ -398,7 +496,7 @@ export default function Lab() {
             </div>
 
             {/* Cluster B */}
-            <div className="lab-cluster-card">
+            <div className="lab-cluster-card animate-slide-up">
               <div className="cluster-header">
                 <span className="cluster-emoji">🧩</span>
                 <h3>Logic & Detective Hub</h3>
@@ -425,13 +523,21 @@ export default function Lab() {
             </div>
 
             {/* Cluster C */}
-            <div className="lab-cluster-card">
+            <div className="lab-cluster-card animate-slide-up">
               <div className="cluster-header">
                 <span className="cluster-emoji">⚔️</span>
                 <h3>Perspective & Debate Arena</h3>
               </div>
               <p className="cluster-desc">Understand other viewpoints, write opposing perspectives, and spot logical fallacies.</p>
               <div className="activity-list">
+                <button className="activity-item-btn" onClick={() => setActiveTab('perspective')}>
+                  <span className="btn-icon">🎭</span>
+                  <div className="btn-info">
+                    <strong>Perspective Switch</strong>
+                    <span>Write a scene from a character's viewpoint</span>
+                  </div>
+                  <span className="btn-arrow">→</span>
+                </button>
                 <button className="activity-item-btn" onClick={() => setActiveTab('fallacy')}>
                   <span className="btn-icon">💡</span>
                   <div className="btn-info">
@@ -459,57 +565,51 @@ export default function Lab() {
           </div>
 
           <div className="dice-intro">
-            <p>Roll the creative dice to get a random Character, Location, and Problem. Combine them into an adventure!</p>
+            <p>Roll the physical-style creative dice to get a random plot. Combine them into an adventure!</p>
             <button className="btn btn-primary dice-roll-btn animate-pulse-glow" onClick={rollDice} disabled={rolling}>
               <FiShuffle /> {rolling ? 'Rolling...' : 'Roll Dice!'}
             </button>
           </div>
 
-          {rolling && (
-            <div className="dice-rolling-view">
-              <div className="spinner">🎲</div>
-              <p>Consulting the story generator...</p>
+          {/* Dice rolling layout */}
+          <div className="dice-container-panel">
+            <div className={`die-face ${rolling ? 'rolling-die' : ''}`}>
+              <div className="die-tag">CHARACTER</div>
+              <div className="die-emoji">{rolling ? cycleEmojis.char : (rolledData ? cycleEmojis.char : '👤')}</div>
+              <div className="die-title">{rolledData && !rolling ? rolledData.character.name : 'Ready...'}</div>
+            </div>
+            <div className={`die-face location-die ${rolling ? 'rolling-die' : ''}`}>
+              <div className="die-tag">LOCATION</div>
+              <div className="die-emoji">{rolling ? cycleEmojis.loc : (rolledData ? cycleEmojis.loc : '📍')}</div>
+              <div className="die-title">{rolledData && !rolling ? rolledData.location.name : 'Ready...'}</div>
+            </div>
+            <div className={`die-face problem-die ${rolling ? 'rolling-die' : ''}`}>
+              <div className="die-tag">PROBLEM</div>
+              <div className="die-emoji">{rolling ? cycleEmojis.prob : (rolledData ? cycleEmojis.prob : '⚠️')}</div>
+              <div className="die-title">{rolledData && !rolling ? rolledData.problem.name : 'Ready...'}</div>
+            </div>
+          </div>
+
+          {diceRolled && !rolling && rolledData && (
+            <div className="dice-details-panel animate-fade-in">
+              <div className="details-header">Rolled Parameters:</div>
+              <ul>
+                <li><strong>Character:</strong> {rolledData.character.text}</li>
+                <li><strong>Location:</strong> {rolledData.location.text}</li>
+                <li><strong>Problem:</strong> {rolledData.problem.text}</li>
+                {complexity === 'teen' && (
+                  <>
+                    <li><strong>Emotion Indicator:</strong> 🎭 {rolledData.emotion}</li>
+                    <li><strong>Required Plot Twist:</strong> 🌀 {rolledData.twist}</li>
+                    <li><strong>Core Theme:</strong> 🌱 {rolledData.theme}</li>
+                  </>
+                )}
+              </ul>
             </div>
           )}
 
           {diceRolled && !rolling && rolledData && (
-            <div className="dice-results-grid">
-              <div className="dice-result-card">
-                <span className="label">CHARACTER</span>
-                <h3>{rolledData.character.name}</h3>
-                <p>{rolledData.character.text}</p>
-              </div>
-              <div className="dice-result-card">
-                <span className="label">LOCATION</span>
-                <h3>{rolledData.location.name}</h3>
-                <p>{rolledData.location.text}</p>
-              </div>
-              <div className="dice-result-card">
-                <span className="label">PROBLEM</span>
-                <h3>{rolledData.problem.name}</h3>
-                <p>{rolledData.problem.text}</p>
-              </div>
-              {complexity === 'teen' && (
-                <>
-                  <div className="dice-result-card premium">
-                    <span className="label">EMOTION</span>
-                    <h3>🎭 {rolledData.emotion}</h3>
-                  </div>
-                  <div className="dice-result-card premium">
-                    <span className="label">PLOT TWIST</span>
-                    <h3>🌀 {rolledData.twist}</h3>
-                  </div>
-                  <div className="dice-result-card premium">
-                    <span className="label">THEME</span>
-                    <h3>🌱 {rolledData.theme}</h3>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {diceRolled && !rolling && rolledData && (
-            <form onSubmit={submitDiceStory} className="dice-editor card animate-fade-in">
+            <form onSubmit={submitDiceStory} className="dice-editor card animate-fade-in mt-4">
               <h3>Draft Your Dice Story</h3>
               <div className="form-group">
                 <label>Story Title</label>
@@ -541,8 +641,8 @@ export default function Lab() {
                     <h4>💡 AI Writing Coach Feedback</h4>
                   </div>
                   <p>{diceFeedback}</p>
-                  <button type="button" className="btn btn-secondary mt-3" onClick={() => setDiceRolled(false)}>
-                    Try Another Roll!
+                  <button type="button" className="btn btn-secondary mt-3" onClick={() => { setDiceRolled(false); rollDice(); }}>
+                    Roll Again!
                   </button>
                 </div>
               )}
@@ -748,6 +848,109 @@ export default function Lab() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 6: PERSPECTIVE SWITCH ─── */}
+      {activeTab === 'perspective' && (
+        <div className="lab-activity-container animate-fade-in">
+          <div className="activity-title-bar">
+            <h2>🎭 Perspective Switch Challenge</h2>
+            <div className="scenario-selector">
+              {PERSPECTIVE_SCENARIOS.map((sc, idx) => (
+                <button
+                  key={idx}
+                  className={scenarioIndex === idx ? 'active' : ''}
+                  onClick={() => {
+                    setScenarioIndex(idx);
+                    setSelectedPerspId('');
+                    setPerspContent('');
+                    setPerspSubmitted(false);
+                    setPerspFeedback('');
+                  }}
+                >
+                  Case #{idx + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="perspective-layout card">
+            <div className="scenario-details mb-4">
+              <h3>Original Scenario: {PERSPECTIVE_SCENARIOS[scenarioIndex].title}</h3>
+              <p className="narrative-text">{PERSPECTIVE_SCENARIOS[scenarioIndex].narrative}</p>
+            </div>
+
+            <div className="perspectives-selection mb-4">
+              <h4>Choose a Perspective to Adopt:</h4>
+              <div className="persp-avatars-grid">
+                {PERSPECTIVE_SCENARIOS[scenarioIndex].perspectives.map((persp) => (
+                  <button
+                    key={persp.id}
+                    type="button"
+                    className={`persp-avatar-btn ${selectedPerspId === persp.id ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSelectedPerspId(persp.id);
+                      setPerspFeedback('');
+                      setPerspSubmitted(false);
+                    }}
+                    disabled={perspSubmitted}
+                  >
+                    <span className="avatar-emoji">{persp.avatar}</span>
+                    <strong className="avatar-role">{persp.role}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {selectedPerspId && (
+              <div className="persp-writing-box animate-fade-in">
+                <div className="persp-hint-bubble">
+                  💡 <strong>Writing Hint:</strong> {PERSPECTIVE_SCENARIOS[scenarioIndex].perspectives.find(p => p.id === selectedPerspId).hint}
+                </div>
+
+                <form onSubmit={submitPerspective} className="mt-4">
+                  <div className="form-group">
+                    <label>Rewrite the scene from your chosen perspective:</label>
+                    <textarea
+                      placeholder={`Put yourself in the shoes of ${PERSPECTIVE_SCENARIOS[scenarioIndex].perspectives.find(p => p.id === selectedPerspId).role}. How do they experience this moment?`}
+                      rows={7}
+                      value={perspContent}
+                      onChange={(e) => setPerspContent(e.target.value)}
+                      required
+                      disabled={perspSubmitted || submittingPersp}
+                    />
+                  </div>
+
+                  {!perspSubmitted ? (
+                    <button type="submit" className="btn btn-primary" disabled={submittingPersp || !perspContent.trim()}>
+                      {submittingPersp ? 'Coaching Evaluation...' : 'Submit Perspective Piece'}
+                    </button>
+                  ) : (
+                    <div className="persp-feedback-box success animate-fade-in mt-3">
+                      <div className="result-header">
+                        <FiCheckCircle />
+                        <h4>Story Evaluated! +40 XP Awarded</h4>
+                      </div>
+                      <p className="explanation-text">{perspFeedback}</p>
+                      <button
+                        type="button"
+                        className="btn btn-secondary mt-3"
+                        onClick={() => {
+                          setSelectedPerspId('');
+                          setPerspContent('');
+                          setPerspSubmitted(false);
+                          setPerspFeedback('');
+                        }}
+                      >
+                        Try Another Viewpoint
+                      </button>
+                    </div>
+                  )}
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}
