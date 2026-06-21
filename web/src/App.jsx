@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { supabase } from './supabase';
 import { useAuthStore, useAppStore } from './store';
 import { identifyUser, resetAnalytics, trackPageViewed } from './analytics';
@@ -149,6 +149,26 @@ export default function App() {
           .maybeSingle();
         
         const meta = user.user_metadata || {};
+        const role = dbProfile?.role || meta.role || 'child';
+
+        // Check if Parent exists in student profiles parent_email
+        if (role === 'parent') {
+          const parentEmail = user.email;
+          const { data: linkedKids, error: linkErr } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('parent_email', parentEmail)
+            .limit(1);
+
+          if (linkErr) throw linkErr;
+
+          if (!linkedKids || linkedKids.length === 0) {
+            await supabase.auth.signOut();
+            toast.error("No student is associated with this email address. Please contact your child's teacher. 🚫", { duration: 6000 });
+            return null;
+          }
+        }
+
         return {
           uid: user.id,
           name: dbProfile?.name || meta.name || user.email?.split('@')[0] || 'Writer',

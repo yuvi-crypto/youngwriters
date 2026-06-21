@@ -429,6 +429,135 @@ app.post('/api/moderation/:id/action',
   }
 );
 
+// ── 9. POST /api/teacher/create-student ───────────────────────
+// Allowed: teacher
+app.post('/api/teacher/create-student',
+  authenticateToken,
+  async (req, res) => {
+    if (req.role !== 'teacher') {
+      return res.status(403).json({ error: 'Only teacher accounts can create student logins' });
+    }
+
+    const { name, username, password, parentEmail, age, language } = req.body;
+
+    if (!name || !username || !password || !age) {
+      return res.status(400).json({ error: 'Name, Username, Password, and Age are required' });
+    }
+
+    try {
+      const studentUsername = username.trim().toLowerCase();
+      const internalEmail = `${studentUsername}@yw-students.local`;
+
+      // 1. Check if username is already taken in public.profiles
+      const { data: existingProfile, error: checkErr } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('username', studentUsername)
+        .maybeSingle();
+
+      if (checkErr) throw checkErr;
+      if (existingProfile) {
+        return res.status(400).json({ error: `Username "${studentUsername}" is already taken` });
+      }
+
+      // 2. Fetch the teacher's profile to get their teacher_id tag
+      const { data: teacherProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('teacher_id')
+        .eq('id', req.user.id)
+        .maybeSingle();
+
+      const teacherTag = teacherProfile?.teacher_id || null;
+
+      // 3. Create the user in Supabase Auth
+      const { data: newUser, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+        email: internalEmail,
+        password: password,
+        email_confirm: true,
+        user_metadata: {
+          name: name.trim(),
+          role: 'child',
+          username: studentUsername,
+          age: Number(age),
+          language: language || 'en',
+          account_type: 'username_account',
+          parentEmail: parentEmail ? parentEmail.trim().toLowerCase() : null,
+          teacher_id: teacherTag
+        }
+      });
+
+      if (authErr) throw authErr;
+
+      res.json({ message: 'Student account created successfully!', student: newUser.user });
+    } catch (err) {
+      console.error('Error creating student:', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// ── 10. POST /api/student/reset-password ─────────────────────
+// Allowed: teacher, parent
+app.post('/api/student/reset-password',
+  authenticateToken,
+  async (req, res) => {
+    const { studentId, newPassword } = req.body;
+
+    if (!studentId || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Student ID and a password of at least 6 characters are required' });
+    }
+
+    try {
+      // Fetch the student profile to check authorization
+      const { data: studentProfile, error: fetchErr } = await supabaseAdmin
+        .from('profiles')
+        .select('*')
+        .eq('id', studentId)
+        .maybeSingle();
+
+      if (fetchErr) throw fetchErr;
+      if (!studentProfile) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      let authorized = false;
+
+      if (req.role === 'teacher') {
+        const { data: teacherProfile } = await supabaseAdmin
+          .from('profiles')
+          .select('teacher_id')
+          .eq('id', req.user.id)
+          .maybeSingle();
+        
+        if (teacherProfile && studentProfile.teacher_id === teacherProfile.teacher_id) {
+          authorized = true;
+        }
+      } else if (req.role === 'parent') {
+        if (studentProfile.parent_email && studentProfile.parent_email.toLowerCase() === req.user.email.toLowerCase()) {
+          authorized = true;
+        }
+      }
+
+      if (!authorized) {
+        return res.status(403).json({ error: 'You are not authorized to reset the password for this student' });
+      }
+
+      // Update student password using Admin Auth
+      const { error: resetErr } = await supabaseAdmin.auth.admin.updateUserById(
+        studentId,
+        { password: newPassword }
+      );
+
+      if (resetErr) throw resetErr;
+
+      res.json({ message: 'Student password reset successfully!' });
+    } catch (err) {
+      console.error('Error resetting student password:', err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
 // Server startup
 app.listen(PORT, () => {
   console.log(`Backend server running at http://localhost:${PORT}`);

@@ -8,9 +8,8 @@ import { identifyUser, trackSignUpCompleted, trackLoginCompleted } from '../anal
 import './Auth.css';
 
 const ROLES = [
-  { id: 'child',   emoji: '✍️',  label: "I'm a writer",   desc: 'Age 5–17 · Username login' },
-  { id: 'parent',  emoji: '👨‍👧',  label: "I'm a parent",   desc: 'Email login' },
-  { id: 'teacher', emoji: '🏫',  label: "I'm a teacher",  desc: 'Classroom + assignments' },
+  { id: 'parent',  emoji: '👨‍👧',  label: "I'm a parent",   desc: 'Register with Google' },
+  { id: 'teacher', emoji: '🏫',  label: "I'm a teacher",  desc: 'Register with Google' },
 ];
 
 const AGES = Array.from({ length: 13 }, (_, i) => i + 5); // 5–17

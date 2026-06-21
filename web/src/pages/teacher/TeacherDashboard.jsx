@@ -20,6 +20,10 @@ export default function TeacherDashboard() {
   const [creatingClass, setCreatingClass] = useState(false);
   const [updatingStudentId, setUpdatingStudentId] = useState(null);
 
+  // Student creation state
+  const [studentForm, setStudentForm] = useState({ name: '', username: '', password: '', parentEmail: '', age: 10, language: 'en' });
+  const [creatingStudent, setCreatingStudent] = useState(false);
+
   useEffect(() => {
     fetchAssignments();
     fetchClassrooms();
@@ -120,6 +124,80 @@ export default function TeacherDashboard() {
       toast.error('Failed to assign parent: ' + err.message);
     } finally {
       setUpdatingStudentId(null);
+    }
+  };
+
+  const handleCreateStudent = async (e) => {
+    e.preventDefault();
+    if (!studentForm.name.trim() || !studentForm.username.trim() || !studentForm.password.trim() || !studentForm.parentEmail.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (studentForm.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    setCreatingStudent(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const response = await fetch('/api/teacher/create-student', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: studentForm.name.trim(),
+          username: studentForm.username.trim().toLowerCase(),
+          password: studentForm.password,
+          parentEmail: studentForm.parentEmail.trim().toLowerCase(),
+          age: Number(studentForm.age),
+          language: studentForm.language
+        })
+      });
+
+      const resData = await response.json();
+      if (!response.ok) throw new Error(resData.error || 'Failed to create student');
+
+      toast.success(`Student "${studentForm.name}" created and parent linked! 🎉`);
+      setStudentForm({ name: '', username: '', password: '', parentEmail: '', age: 10, language: 'en' });
+      fetchStudentsAndParents();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setCreatingStudent(false);
+    }
+  };
+
+  const handlePromptResetPassword = async (studentId, studentName) => {
+    const newPassword = prompt(`Enter new password for ${studentName} (minimum 6 characters):`);
+    if (newPassword === null) return;
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const response = await fetch('/api/student/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId, newPassword })
+      });
+
+      const resData = await response.json();
+      if (!response.ok) throw new Error(resData.error || 'Failed to reset password');
+
+      toast.success(`Password for ${studentName} updated successfully! 🔑`);
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 
@@ -264,9 +342,75 @@ export default function TeacherDashboard() {
               </div>
             ) : activeTab === 'students' ? (
               <div className="students-section animate-fade-in card" style={{ padding: '2rem' }}>
+                {/* Add Student Inline Form */}
+                <div className="card" style={{ background: 'rgba(255,255,255,0.03)', padding: '1.5rem', marginBottom: '2rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <h4 style={{ margin: 0, marginBottom: '1rem', color: 'var(--primary)' }}>➕ Register a New Student & Link Parent</h4>
+                  <form onSubmit={handleCreateStudent} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', alignItems: 'end' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Name *</label>
+                      <input 
+                        type="text" 
+                        className="input" 
+                        placeholder="e.g. Charlie" 
+                        value={studentForm.name} 
+                        onChange={(e) => setStudentForm({ ...studentForm, name: e.target.value })} 
+                        required 
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Username *</label>
+                      <input 
+                        type="text" 
+                        className="input" 
+                        placeholder="e.g. charlie_w" 
+                        value={studentForm.username} 
+                        onChange={(e) => setStudentForm({ ...studentForm, username: e.target.value })} 
+                        required 
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Password *</label>
+                      <input 
+                        type="password" 
+                        className="input" 
+                        placeholder="Min 6 chars" 
+                        value={studentForm.password} 
+                        onChange={(e) => setStudentForm({ ...studentForm, password: e.target.value })} 
+                        required 
+                      />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Age *</label>
+                      <select 
+                        className="input" 
+                        value={studentForm.age} 
+                        onChange={(e) => setStudentForm({ ...studentForm, age: e.target.value })}
+                      >
+                        {Array.from({ length: 13 }, (_, i) => i + 5).map(age => (
+                          <option key={age} value={age}>{age} years old</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                      <label style={{ fontSize: '0.8rem', fontWeight: '500' }}>Parent Email *</label>
+                      <input 
+                        type="email" 
+                        className="input" 
+                        placeholder="parent@email.com" 
+                        value={studentForm.parentEmail} 
+                        onChange={(e) => setStudentForm({ ...studentForm, parentEmail: e.target.value })} 
+                        required 
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-primary w-full" style={{ height: '2.8rem' }} disabled={creatingStudent}>
+                      {creatingStudent ? 'Registering...' : 'Register'}
+                    </button>
+                  </form>
+                </div>
+
                 <h3 style={{ margin: 0 }}>Students & Parents List</h3>
                 <p style={{ margin: '0.5rem 0 1.5rem 0', opacity: 0.7, fontSize: '0.9rem' }}>
-                  Link parents to student accounts so they receive updates and complete parental consent requirements.
+                  Manage student accounts and link parent email addresses. Use the action menu to reset credentials.
                 </p>
                 <div className="students-table-wrap" style={{ overflowX: 'auto' }}>
                   <table className="teacher-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -276,12 +420,13 @@ export default function TeacherDashboard() {
                         <th style={{ padding: '10px' }}>Username ID</th>
                         <th style={{ padding: '10px' }}>Linked Parent Email</th>
                         <th style={{ padding: '10px' }}>Assign/Change Parent</th>
+                        <th style={{ padding: '10px' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {students.length === 0 ? (
                         <tr>
-                          <td colSpan="4" style={{ padding: '20px', textAlign: 'center' }}>No students registered yet.</td>
+                          <td colSpan="5" style={{ padding: '20px', textAlign: 'center' }}>No students registered yet.</td>
                         </tr>
                       ) : (
                         students.map((student) => (
@@ -322,6 +467,15 @@ export default function TeacherDashboard() {
                                   </option>
                                 ))}
                               </select>
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              <button
+                                onClick={() => handlePromptResetPassword(student.id, student.name)}
+                                className="btn btn-ghost btn-sm"
+                                style={{ color: 'hsl(32,90%,55%)', borderColor: 'rgba(235,140,30,0.3)', padding: '3px 8px' }}
+                              >
+                                🔑 Reset PW
+                              </button>
                             </td>
                           </tr>
                         ))

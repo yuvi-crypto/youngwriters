@@ -163,6 +163,37 @@ export default function ParentDashboard() {
     navigate('/login');
   };
 
+  const handleResetChildPassword = async () => {
+    if (!child) return;
+    const newPassword = prompt(`Enter new password for ${child.name} (minimum 6 characters):`);
+    if (newPassword === null) return;
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      const response = await fetch('/api/student/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ studentId: child.id, newPassword })
+      });
+
+      const resData = await response.json();
+      if (!response.ok) throw new Error(resData.error || 'Failed to reset password');
+
+      toast.success(`Password for ${child.name} updated successfully! 🔑`);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   return (
     <div className="parent-dashboard-page">
       <div className="parent-bg-orbs">
@@ -200,19 +231,28 @@ export default function ParentDashboard() {
         ) : (
           <div className="parent-dashboard-grid">
             {/* Child Header Card */}
-            <div className="child-profile-summary-card card animate-fade-in">
-              <div className="child-avatar">
-                {child.name ? child.name.slice(0,2).toUpperCase() : 'W'}
-              </div>
-              <div className="child-meta">
-                <h2>{child.name}'s Creative Journey</h2>
-                <p className="text-muted">Username: @{child.username} · Age: {child.age || 'N/A'}</p>
-                <div className="meta-pills">
-                  <span className="pill pill-xp">⚡ {child.xp || 0} XP</span>
-                  <span className="pill pill-streak">🔥 {child.streak_days || 0} Day Streak</span>
-                  <span className="pill pill-pieces">📝 {pieces.length} Pieces Written</span>
+            <div className="child-profile-summary-card card animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+              <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div className="child-avatar">
+                  {child.name ? child.name.slice(0,2).toUpperCase() : 'W'}
+                </div>
+                <div className="child-meta">
+                  <h2>{child.name}'s Creative Journey</h2>
+                  <p className="text-muted">Username: @{child.username} · Age: {child.age || 'N/A'}</p>
+                  <div className="meta-pills">
+                    <span className="pill pill-xp">⚡ {child.xp || 0} XP</span>
+                    <span className="pill pill-streak">🔥 {child.streak_days || 0} Day Streak</span>
+                    <span className="pill pill-pieces">📝 {pieces.length} Pieces Written</span>
+                  </div>
                 </div>
               </div>
+              <button 
+                onClick={handleResetChildPassword}
+                className="btn btn-outline btn-sm"
+                style={{ borderColor: 'rgba(235,140,30,0.3)', color: 'hsl(32,90%,55%)', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
+                🔑 Reset Child's PW
+              </button>
             </div>
 
             {/* Left Side: Analytics */}
