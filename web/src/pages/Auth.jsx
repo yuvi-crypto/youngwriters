@@ -18,8 +18,6 @@ const AGES = Array.from({ length: 13 }, (_, i) => i + 5); // 5–17
 // ── Friendly error mapper ─────────────────────────────────────
 function friendlyError(err) {
   const msg = err?.message || '';
-  if (msg.includes('rate limit') || msg.includes('429') || msg.includes('too many'))
-    return 'Sign-ups are busy right now. Wait 1 minute and try again, or ask your teacher to create your account. ⏳';
   if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('User already registered'))
     return 'This email already has an account. Try logging in instead! 👋';
   if (msg.includes('Invalid login') || msg.includes('Invalid credentials'))

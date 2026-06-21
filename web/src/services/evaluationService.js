@@ -143,7 +143,7 @@ export async function evaluatePiece(text, format, age, promptContext = '') {
 
   if (ai) {
     try {
-      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
       let structureDesc = 'Does it have a clear beginning, middle, end? Does it flow logically?';
       let vocabularyDesc = 'Word variety, precise or evocative word choices?';
@@ -240,7 +240,7 @@ export async function saveEvaluation(supabaseClient, submissionId, scores, piece
       .upsert({
         submission_id: submissionId,
         piece_id: pieceId,
-        evaluator: scores.fallback_used ? 'rule-based' : 'gemini-1.5-flash',
+        evaluator: scores.fallback_used ? 'rule-based' : 'gemini-2.5-flash',
         structure_score: scores.structure,
         vocabulary_score: scores.vocabulary,
         creativity_score: scores.creativity,

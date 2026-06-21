@@ -25,7 +25,7 @@ export async function generatePrompts(age, format) {
 
   if (ai) {
     try {
-      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const prompt = `You are a creative writing coach for children.
 Generate exactly 3 short, inspiring writing prompts for a ${age}-year-old child.
 Format: "${format}" writing.
@@ -61,7 +61,7 @@ export async function generateFeedback(text, format, age) {
 
   if (ai && text.length > 30) {
     try {
-      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const prompt = `You are an encouraging creative writing coach for children.
 Read this ${format} written by a ${age}-year-old:
 ---
@@ -91,7 +91,7 @@ export async function generateNudge(text, format) {
 
   if (ai && text.length > 50) {
     try {
-      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const prompt = `You are a gentle creative writing coach for children.
 Read this ${format}:
 ---
@@ -131,7 +131,7 @@ export async function generateAssignmentIdeas(topic, format, ageBand) {
 
   if (ai) {
     try {
-      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = ai.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const prompt = `You are a creative writing pedagogy assistant helping a teacher create a writing assignment.
 Generate exactly 3 creative, engaging assignment ideas for students in the age band "${ageBand}".
 Writing format: "${format}".

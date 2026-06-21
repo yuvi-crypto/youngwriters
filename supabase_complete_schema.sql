@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS evaluations (
   id                    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   submission_id         UUID REFERENCES submissions(id) ON DELETE CASCADE NOT NULL UNIQUE,
   piece_id              UUID REFERENCES pieces(id) ON DELETE SET NULL,  -- for self-directed pieces
-  evaluator             TEXT DEFAULT 'gemini-1.5-flash',
+  evaluator             TEXT DEFAULT 'gemini-2.5-flash',
   -- Rubric dimensions (1=beginner, 2=developing, 3=proficient, 4=excellent)
   structure_score       NUMERIC(3,1) CHECK (structure_score BETWEEN 1 AND 4),
   vocabulary_score      NUMERIC(3,1) CHECK (vocabulary_score BETWEEN 1 AND 4),
