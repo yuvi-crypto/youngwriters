@@ -42,9 +42,18 @@ export default function Assignments() {
             if (error) throw error;
             classroomsData = data || [];
           }
-        } else {
-          // If student has no teacher link, don't show any classes (except parent practice)
-          classroomsData = [];
+        }
+
+        // Fallback: If classroomsData is empty (e.g., student is not linked to a teacher,
+        // or teacher has no classrooms yet), fetch all classrooms so the student can still
+        // select their classroom during testing/sandbox execution.
+        if (classroomsData.length === 0) {
+          const { data, error } = await supabase
+            .from('classrooms')
+            .select('*')
+            .order('name');
+          if (error) throw error;
+          classroomsData = data || [];
         }
 
         setClassrooms(classroomsData);
