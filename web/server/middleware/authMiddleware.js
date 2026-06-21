@@ -10,10 +10,15 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const isServiceKeyConfigured = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
   console.error('ERROR: Missing Supabase environment variables in server config.');
+}
+
+if (!isServiceKeyConfigured) {
+  console.warn('⚠️ WARNING: SUPABASE_SERVICE_ROLE_KEY is missing on the server! The backend API will query as an anonymous user, causing Row Level Security (RLS) checks to fail and return "User profile not found". Please configure SUPABASE_SERVICE_ROLE_KEY.');
 }
 
 // Admin client to query profiles and other tables bypassing RLS
@@ -51,6 +56,11 @@ export async function authenticateToken(req, res, next) {
       .single();
 
     if (profileErr || !profile) {
+      if (!isServiceKeyConfigured) {
+        return res.status(403).json({ 
+          error: 'User profile not found. (Backend is missing the SUPABASE_SERVICE_ROLE_KEY environment variable. Please configure it in your Vercel Dashboard under Settings > Environment Variables).' 
+        });
+      }
       return res.status(403).json({ error: 'User profile not found' });
     }
 
