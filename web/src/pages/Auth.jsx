@@ -174,6 +174,26 @@ export default function Signup() {
     }
   };
 
+  const handleGoogleSignup = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/home`,
+          data: {
+            role: role,
+            account_type: 'email_account',
+          }
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(friendlyError(err));
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="auth-page">
       <div className="auth-bg-orbs">
@@ -351,6 +371,57 @@ export default function Signup() {
               </button>
             </form>
 
+            {!isChild && (
+              <>
+                <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
+                  <span>or</span>
+                  <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleGoogleSignup}
+                  disabled={loading}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'transparent',
+                    color: 'var(--text)',
+                    height: '2.8rem',
+                    width: '100%',
+                    borderRadius: '0.5rem',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    fontWeight: '500',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
+                    <path
+                      fill="#4285F4"
+                      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.1.3-1.12 2.18l3.22 2.5c1.88-1.73 2.95-4.28 2.95-7.53z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.22-2.5c-.9.6-2.05.96-3.22.96-3.11 0-5.74-2.1-6.68-4.96l-3.32 2.58C5.47 21.09 8.44 24 12 24z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.32 14.59c-.24-.7-.38-1.46-.38-2.24s.14-1.54.38-2.24L1.99 7.53C1.19 9.17.75 11 .75 12.85s.44 3.68 1.24 5.32l3.33-2.58z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.96 1.19 15.24 0 12 0 8.44 0 5.47 2.91 3.49 5.32l3.33 2.58C7.76 5.1 10.39 4.75 12 4.75z"
+                    />
+                  </svg>
+                  Register with Google
+                </button>
+              </>
+            )}
+
             <p className="auth-footer-text">
               Already have an account? <Link to="/login">Log in</Link>
             </p>
@@ -427,6 +498,22 @@ export function Login() {
     } catch (err) {
       toast.error(friendlyError(err));
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/home`,
+        }
+      });
+      if (error) throw error;
+    } catch (err) {
+      toast.error(friendlyError(err));
       setLoading(false);
     }
   };
@@ -511,6 +598,57 @@ export function Login() {
             {loading ? '⏳ Logging in...' : '🚀 Log in'}
           </button>
         </form>
+
+        {loginType === 'email' && (
+          <>
+            <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
+              <span>or</span>
+              <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
+            </div>
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                border: '1px solid var(--border)',
+                backgroundColor: 'transparent',
+                color: 'var(--text)',
+                height: '2.8rem',
+                width: '100%',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.95rem',
+                fontWeight: '500',
+                transition: 'all 0.2s',
+              }}
+            >
+              <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.92h6.69c-.29 1.5-.1.3-1.12 2.18l3.22 2.5c1.88-1.73 2.95-4.28 2.95-7.53z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.97-1.08 7.96-2.91l-3.22-2.5c-.9.6-2.05.96-3.22.96-3.11 0-5.74-2.1-6.68-4.96l-3.32 2.58C5.47 21.09 8.44 24 12 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.32 14.59c-.24-.7-.38-1.46-.38-2.24s.14-1.54.38-2.24L1.99 7.53C1.19 9.17.75 11 .75 12.85s.44 3.68 1.24 5.32l3.33-2.58z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.43-3.43C17.96 1.19 15.24 0 12 0 8.44 0 5.47 2.91 3.49 5.32l3.33 2.58C7.76 5.1 10.39 4.75 12 4.75z"
+                />
+              </svg>
+              Sign in with Google
+            </button>
+          </>
+        )}
 
         <p className="auth-footer-text">
           New here? <Link to="/signup">Create a free account</Link>
