@@ -288,11 +288,15 @@ export default function Write() {
       // 4. Save Submission and Evaluation to Supabase (if classroom assignment)
       if (user && assignment) {
         try {
+          const searchParams = new URLSearchParams(window.location.search);
+          const classroomId = searchParams.get('classroom') || assignment?.classroom_id;
+
           const { data: subData, error: subErr } = await supabase
             .from('submissions')
             .insert({
               assignment_id: assignment.id,
               student_id: user.id,
+              classroom_id: classroomId || null,
               title: title || `My ${format.label}`,
               content: fullText,
               word_count: wordCount,

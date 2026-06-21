@@ -8,13 +8,22 @@ import './TeacherDashboard.css';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, profile, logout } = useAuthStore();
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'active' | 'draft' | 'closed'
+  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'active' | 'draft' | 'closed' | 'classrooms' | 'students'
+
+  const [classrooms, setClassrooms] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [parents, setParents] = useState([]);
+  const [newClassName, setNewClassName] = useState('');
+  const [creatingClass, setCreatingClass] = useState(false);
+  const [updatingStudentId, setUpdatingStudentId] = useState(null);
 
   useEffect(() => {
     fetchAssignments();
+    fetchClassrooms();
+    fetchStudentsAndParents();
   }, [user]);
 
   async function fetchAssignments() {
@@ -39,6 +48,80 @@ export default function TeacherDashboard() {
       setLoading(false);
     }
   }
+
+  async function fetchClassrooms() {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('classrooms')
+        .select('*')
+        .eq('teacher_id', user.id)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      setClassrooms(data || []);
+    } catch (e) {
+      console.error('Failed to load classrooms:', e);
+    }
+  }
+
+  async function fetchStudentsAndParents() {
+    try {
+      const { data: studentsData, error: sErr } = await supabase
+        .from('profiles')
+        .select('id, name, username, parent_email')
+        .eq('role', 'child')
+        .order('name');
+      if (sErr) throw sErr;
+      setStudents(studentsData || []);
+
+      const { data: parentsData, error: pErr } = await supabase
+        .from('profiles')
+        .select('id, name, email')
+        .eq('role', 'parent')
+        .order('name');
+      if (pErr) throw pErr;
+      setParents(parentsData || []);
+    } catch (e) {
+      console.error('Failed to load students and parents:', e);
+    }
+  }
+
+  const handleCreateClassroom = async (e) => {
+    e.preventDefault();
+    if (!newClassName.trim()) return;
+    setCreatingClass(true);
+    try {
+      const { data, error } = await supabase
+        .from('classrooms')
+        .insert({ name: newClassName.trim(), teacher_id: user.id })
+        .select();
+      if (error) throw error;
+      toast.success(`Classroom "${newClassName.trim()}" created!`);
+      setNewClassName('');
+      fetchClassrooms();
+    } catch (err) {
+      toast.error('Failed to create classroom: ' + err.message);
+    } finally {
+      setCreatingClass(false);
+    }
+  };
+
+  const handleAssignParent = async (studentId, parentEmail) => {
+    setUpdatingStudentId(studentId);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ parent_email: parentEmail || null })
+        .eq('id', studentId);
+      if (error) throw error;
+      toast.success('Parent assigned successfully!');
+      setStudents(students.map(s => s.id === studentId ? { ...s, parent_email: parentEmail } : s));
+    } catch (err) {
+      toast.error('Failed to assign parent: ' + err.message);
+    } finally {
+      setUpdatingStudentId(null);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -85,7 +168,9 @@ export default function TeacherDashboard() {
             <h1>Teacher<strong>Portal</strong></h1>
           </div>
           <div className="teacher-user-menu">
-            <span className="teacher-user-name">Welcome, {user?.user_metadata?.name || 'Teacher'} 👋</span>
+            <span className="teacher-user-name">
+              Welcome, {user?.user_metadata?.name || 'Teacher'}{profile?.teacherId ? ` (ID: ${profile.teacherId})` : ''} 👋
+            </span>
             <button onClick={handleLogout} className="btn btn-ghost btn-sm">Log out</button>
           </div>
         </div>
@@ -121,9 +206,131 @@ export default function TeacherDashboard() {
                   </span>
                 </button>
               ))}
+              <button
+                className={`tab-btn ${activeTab === 'classrooms' ? 'active' : ''}`}
+                onClick={() => setActiveTab('classrooms')}
+              >
+                🏫 My Classes
+                <span className="tab-count">{classrooms.length}</span>
+              </button>
+              <button
+                className={`tab-btn ${activeTab === 'students' ? 'active' : ''}`}
+                onClick={() => setActiveTab('students')}
+              >
+                👨‍👩‍👧 Students & Parents
+                <span className="tab-count">{students.length}</span>
+              </button>
             </div>
 
-            {loading ? (
+            {activeTab === 'classrooms' ? (
+              <div className="classrooms-section animate-fade-in">
+                <div className="create-class-card card" style={{ maxWidth: '500px', margin: '0 0 2rem 0', padding: '1.5rem' }}>
+                  <h3>Create a New Class</h3>
+                  <form onSubmit={handleCreateClassroom} style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+                    <input
+                      type="text"
+                      placeholder="e.g. Class 5-A, Writing Club"
+                      value={newClassName}
+                      onChange={(e) => setNewClassName(e.target.value)}
+                      className="input"
+                      style={{ flex: 1 }}
+                      required
+                    />
+                    <button type="submit" className="btn btn-primary" disabled={creatingClass}>
+                      {creatingClass ? 'Creating...' : 'Create Class'}
+                    </button>
+                  </form>
+                </div>
+
+                <div className="classrooms-list-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' }}>
+                  {classrooms.length === 0 ? (
+                    <div className="empty-dashboard-card" style={{ gridColumn: '1/-1' }}>
+                      <FiFolderPlus className="empty-icon" />
+                      <h3>No classes created yet</h3>
+                      <p>Create your first class above to start posting targeted assignments!</p>
+                    </div>
+                  ) : (
+                    classrooms.map((cls) => (
+                      <div key={cls.id} className="classroom-card card" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <span style={{ fontSize: '2rem' }}>🏫</span>
+                        <h3 style={{ margin: 0 }}>{cls.name}</h3>
+                        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.7 }}>
+                          Created: {new Date(cls.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            ) : activeTab === 'students' ? (
+              <div className="students-section animate-fade-in card" style={{ padding: '2rem' }}>
+                <h3 style={{ margin: 0 }}>Students & Parents List</h3>
+                <p style={{ margin: '0.5rem 0 1.5rem 0', opacity: 0.7, fontSize: '0.9rem' }}>
+                  Link parents to student accounts so they receive updates and complete parental consent requirements.
+                </p>
+                <div className="students-table-wrap" style={{ overflowX: 'auto' }}>
+                  <table className="teacher-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
+                        <th style={{ padding: '10px' }}>Student Name</th>
+                        <th style={{ padding: '10px' }}>Username ID</th>
+                        <th style={{ padding: '10px' }}>Linked Parent Email</th>
+                        <th style={{ padding: '10px' }}>Assign/Change Parent</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {students.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" style={{ padding: '20px', textAlign: 'center' }}>No students registered yet.</td>
+                        </tr>
+                      ) : (
+                        students.map((student) => (
+                          <tr key={student.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <td style={{ padding: '15px 10px' }}><strong>{student.name}</strong></td>
+                            <td style={{ padding: '15px 10px' }}>
+                              <span className="student-username" style={{ background: 'rgba(255,255,255,0.08)', padding: '3px 8px', borderRadius: '4px', fontSize: '0.85rem' }}>
+                                @{student.username || 'no-username'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              {student.parent_email ? (
+                                <span style={{ color: 'hsl(160,65%,60%)', fontSize: '0.9rem' }}>{student.parent_email}</span>
+                              ) : (
+                                <span style={{ opacity: 0.5, fontSize: '0.9rem' }}>Unlinked</span>
+                              )}
+                            </td>
+                            <td style={{ padding: '15px 10px' }}>
+                              <select
+                                className="parent-select"
+                                value={student.parent_email || ''}
+                                onChange={(e) => handleAssignParent(student.id, e.target.value)}
+                                disabled={updatingStudentId === student.id}
+                                style={{
+                                  background: '#1a1a2e',
+                                  color: '#fff',
+                                  border: '1px solid rgba(255,255,255,0.15)',
+                                  padding: '5px 10px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.85rem',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <option value="">Unlink / Select Parent</option>
+                                {parents.map((p) => (
+                                  <option key={p.id} value={p.email}>
+                                    {p.name} ({p.email})
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ) : loading ? (
               <div className="dashboard-loading">
                 <div className="spinner" />
                 <p>Loading your assignments...</p>

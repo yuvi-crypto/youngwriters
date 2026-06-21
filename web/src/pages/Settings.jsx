@@ -39,6 +39,11 @@ export default function Settings() {
             <div className="profile-info">
               <h3>{profile?.name || 'Young Writer'}</h3>
               <p>{profile?.email}</p>
+              {profile?.role === 'teacher' && profile?.teacherId && (
+                <div style={{ marginTop: '4px', fontSize: '0.9rem', color: 'hsl(258, 20%, 75%)' }}>
+                  🔑 Teacher ID: <strong style={{ color: 'white' }}>{profile.teacherId}</strong>
+                </div>
+              )}
               <div className="profile-badges-row">
                 <span className="badge badge-primary">{profile?.role || 'Writer'}</span>
                 {profile?.age && <span className="badge badge-secondary">Age {profile.age}</span>}

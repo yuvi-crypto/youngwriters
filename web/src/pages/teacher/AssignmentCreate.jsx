@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store';
 import { supabase } from '../../supabase';
@@ -20,12 +20,35 @@ export default function AssignmentCreate() {
   // Form State
   const [format, setFormat] = useState('story');
   const [targetAgeBand, setTargetAgeBand] = useState('8-12');
+  const [classroomId, setClassroomId] = useState('');
+  const [classrooms, setClassrooms] = useState([]);
   const [dueDate, setDueDate] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [promptText, setPromptText] = useState('');
   const [scaffoldInput, setScaffoldInput] = useState('');
   const [scaffold, setScaffold] = useState([]);
+
+  useEffect(() => {
+    async function fetchTeacherClassrooms() {
+      if (!user) return;
+      try {
+        const { data, error } = await supabase
+          .from('classrooms')
+          .select('*')
+          .eq('teacher_id', user.id)
+          .order('name');
+        if (error) throw error;
+        setClassrooms(data || []);
+        if (data && data.length > 0) {
+          setClassroomId(data[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load classrooms:', err);
+      }
+    }
+    fetchTeacherClassrooms();
+  }, [user]);
   
   // Image State
   const [includeImage, setIncludeImage] = useState(false);
@@ -108,6 +131,10 @@ export default function AssignmentCreate() {
       toast.error('Title and Writing Prompt are required');
       return;
     }
+    if (!classroomId) {
+      toast.error('Please assign this assessment to a class');
+      return;
+    }
 
     setLoading(true);
     let finalImageUrl = imageUrl;
@@ -137,6 +164,7 @@ export default function AssignmentCreate() {
       // 2. Insert assignment to Supabase
       const newAssignment = {
         teacher_id: user.id,
+        classroom_id: classroomId,
         title: title.trim(),
         description: description.trim(),
         format,
@@ -210,7 +238,24 @@ export default function AssignmentCreate() {
                   </select>
                 </div>
 
-                <div className="input-group full-width">
+                <div className="input-group">
+                  <label className="input-label">Assign to Class *</label>
+                  <select 
+                    className="input" 
+                    value={classroomId} 
+                    onChange={(e) => setClassroomId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a Class</option>
+                    {classrooms.map((cls) => (
+                      <option key={cls.id} value={cls.id}>
+                        🏫 {cls.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="input-group">
                   <label className="input-label">Due Date (Optional)</label>
                   <input
                     type="date"

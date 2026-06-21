@@ -33,9 +33,9 @@ BEGIN
     v_teacher_id, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 
     'teacher@yw.local', v_encrypted_pw, NOW(), 
     '{"provider":"email","providers":["email"]}', 
-    '{"name":"Teacher Alice","role":"teacher","account_type":"email_account"}', 
+    '{"name":"Teacher Alice","role":"teacher","account_type":"email_account","teacher_id":"TEA-111"}', 
     NOW(), NOW(),
-    '', '', '', '', '', '', '', '', ''
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
   );
 
   INSERT INTO auth.identities (
@@ -59,7 +59,7 @@ BEGIN
     '{"provider":"email","providers":["email"]}', 
     '{"name":"Parent Bob","role":"parent","account_type":"email_account"}', 
     NOW(), NOW(),
-    '', '', '', '', '', '', '', '', ''
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
   );
 
   INSERT INTO auth.identities (
@@ -83,7 +83,7 @@ BEGIN
     '{"provider":"email","providers":["email"]}', 
     '{"name":"Student Charlie","role":"child","username":"student_charlie","age":10,"language":"en","account_type":"username_account"}', 
     NOW(), NOW(),
-    '', '', '', '', '', '', '', '', ''
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
   );
 
   INSERT INTO auth.identities (
@@ -97,20 +97,22 @@ BEGIN
 END $$;
 
 -- ── 4. Manually trigger profiles in case trigger wasn't active yet ─
-INSERT INTO public.profiles (id, name, role, age, language, username, account_type)
+INSERT INTO public.profiles (id, name, role, age, language, username, account_type, email, teacher_id)
 VALUES 
-  ('11111111-1111-1111-1111-111111111111', 'Teacher Alice', 'teacher', NULL, 'en', NULL, 'email_account'),
-  ('22222222-2222-2222-2222-222222222222', 'Parent Bob', 'parent', NULL, 'en', NULL, 'email_account'),
-  ('33333333-3333-3333-3333-333333333333', 'Student Charlie', 'child', 10, 'en', 'student_charlie', 'username_account')
+  ('11111111-1111-1111-1111-111111111111', 'Teacher Alice', 'teacher', NULL, 'en', NULL, 'email_account', 'teacher@yw.local', 'TEA-111'),
+  ('22222222-2222-2222-2222-222222222222', 'Parent Bob', 'parent', NULL, 'en', NULL, 'email_account', 'parent@yw.local', NULL),
+  ('33333333-3333-3333-3333-333333333333', 'Student Charlie', 'child', 10, 'en', 'student_charlie', 'username_account', 'student_charlie@yw-students.local', NULL)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
   role = EXCLUDED.role,
   age = EXCLUDED.age,
   language = EXCLUDED.language,
   username = EXCLUDED.username,
-  account_type = EXCLUDED.account_type;
+  account_type = EXCLUDED.account_type,
+  email = EXCLUDED.email,
+  teacher_id = EXCLUDED.teacher_id;
 
--- ── 5. Ensure any other auth.users columns are safe ──────────
+-- ── 5. Ensure seeded auth.users tokens are clean ──────────
 UPDATE auth.users 
 SET 
   confirmation_token = COALESCE(confirmation_token, ''),
@@ -120,5 +122,9 @@ SET
   phone_change_token = COALESCE(phone_change_token, ''),
   email_change = COALESCE(email_change, ''),
   phone_change = COALESCE(phone_change, ''),
-  reauthentication_token = COALESCE(reauthentication_token, ''),
-  phone = COALESCE(phone, '');
+  reauthentication_token = COALESCE(reauthentication_token, '')
+WHERE id IN (
+  '11111111-1111-1111-1111-111111111111',
+  '22222222-2222-2222-2222-222222222222',
+  '33333333-3333-3333-3333-333333333333'
+);

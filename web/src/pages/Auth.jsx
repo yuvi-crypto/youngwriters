@@ -59,7 +59,7 @@ export default function Signup() {
   const [usernameError, setUsernameError] = useState('');
   const [form, setForm] = useState({
     name: '', username: '', email: '', password: '',
-    age: 10, language: 'en',
+    age: 10, language: 'en', teacherId: '',
   });
 
   const isChild = role === 'child';
@@ -113,6 +113,10 @@ export default function Signup() {
       toast.error('Please fill in all required fields');
       return;
     }
+    if (role === 'teacher' && !form.teacherId.trim()) {
+      toast.error('Teacher ID is required');
+      return;
+    }
     if (form.password.length < 6) {
       toast.error('Password must be at least 6 characters');
       return;
@@ -126,6 +130,7 @@ export default function Signup() {
           role,
           language: form.language,
           account_type: 'email_account',
+          teacher_id: role === 'teacher' ? form.teacherId.trim() : null,
         },
       },
     });
@@ -156,6 +161,7 @@ export default function Signup() {
         language: form.language,
         username: isChild ? form.username.trim().toLowerCase() : null,
         accountType: isChild ? 'username_account' : 'email_account',
+        teacherId: role === 'teacher' ? form.teacherId.trim() : null,
       };
       setUser(data.user);
       setProfile(profile);
@@ -303,6 +309,25 @@ export default function Signup() {
                 </div>
               )}
 
+              {/* Teacher ID (teachers only) */}
+              {role === 'teacher' && (
+                <div className="input-group">
+                  <label className="input-label">Teacher ID *</label>
+                  <div className="input-icon-wrap">
+                    <FiUser className="input-icon" />
+                    <input
+                      className="input input-with-icon"
+                      type="text"
+                      name="teacherId"
+                      placeholder="e.g. TEA-482"
+                      value={form.teacherId}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Password */}
               <div className="input-group">
                 <label className="input-label">Password *</label>
@@ -371,15 +396,29 @@ export function Login() {
       if (error) throw error;
 
       const meta = data.user?.user_metadata || {};
+      const userRole = meta.role || 'child';
+
+      // Enforce: only student can login with ID/username, students cannot login with email
+      if (loginType === 'email' && (userRole === 'child' || data.user.email?.endsWith('@yw-students.local'))) {
+        await supabase.auth.signOut();
+        throw new Error('Students must log in with their Username ID in the Writer tab.');
+      }
+
+      if (loginType === 'username' && userRole !== 'child') {
+        await supabase.auth.signOut();
+        throw new Error('Only student/writer accounts can log in with username ID.');
+      }
+
       const profile = {
         uid: data.user.id,
         name: meta.name || data.user.email?.split('@')[0] || 'Writer',
         email: meta.account_type === 'username_account' ? null : data.user.email,
-        role: meta.role || 'child',
+        role: userRole,
         age: meta.age || 12,
         language: meta.language || 'en',
         username: meta.username || null,
         accountType: meta.account_type || 'email_account',
+        teacherId: meta.teacher_id || null,
       };
       setUser(data.user);
       setProfile(profile);

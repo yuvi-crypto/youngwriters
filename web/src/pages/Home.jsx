@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuthStore, useAppStore } from '../store';
 import { FORMATS, ACTIVE_CONTESTS, SAMPLE_FEED } from '../constants';
 import { FiEdit3, FiTrendingUp, FiAward, FiClock, FiCpu, FiImage, FiInbox } from 'react-icons/fi';
@@ -7,6 +7,13 @@ import './Home.css';
 export default function Home() {
   const { profile } = useAuthStore();
   const { pieces, badges, xp, streak } = useAppStore();
+
+  if (profile?.role === 'parent') {
+    return <Navigate to="/parent" replace />;
+  }
+  if (profile?.role === 'teacher') {
+    return <Navigate to="/teacher" replace />;
+  }
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';

@@ -11,24 +11,78 @@ export default function Assignments() {
   const navigate = useNavigate();
   const { user, profile } = useAuthStore();
   const [assignments, setAssignments] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
+  const [selectedClassroomId, setSelectedClassroomId] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedSubmission, setSelectedSubmission] = useState(null); // for viewing completed evaluation
 
   useEffect(() => {
+    async function fetchClassroomsList() {
+      try {
+        const { data, error } = await supabase
+          .from('classrooms')
+          .select('*')
+          .order('name');
+        if (error) throw error;
+        setClassrooms(data || []);
+        
+        const saved = localStorage.getItem('student_classroom_id');
+        if (saved) {
+          setSelectedClassroomId(saved);
+        } else if (data && data.length > 0) {
+          setSelectedClassroomId(data[0].id);
+          localStorage.setItem('student_classroom_id', data[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to load classrooms list:', err);
+      }
+    }
+    fetchClassroomsList();
+  }, []);
+
+  useEffect(() => {
     fetchStudentAssignments();
-  }, [user, profile]);
+  }, [user, profile, selectedClassroomId]);
 
   async function fetchStudentAssignments() {
     if (!user) return;
+    if (!selectedClassroomId) {
+      setAssignments([]);
+      setLoading(false);
+      return;
+    }
     try {
       setLoading(true);
+
+      // Find parent user ID if selected classroom is parent_practice
+      let parentUserId = null;
+      if (selectedClassroomId === 'parent_practice' && profile?.parent_email) {
+        const { data: parentProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('email', profile.parent_email)
+          .eq('role', 'parent')
+          .maybeSingle();
+        if (parentProfile) {
+          parentUserId = parentProfile.id;
+        }
+      }
       
-      // 1. Fetch active assignments matching student age group
-      const { data: assignData, error: assignErr } = await supabase
-        .from('assignments')
-        .select('*')
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+      // 1. Fetch active assignments matching student age group and classroom/parent
+      let query = supabase.from('assignments').select('*').eq('status', 'active');
+      if (selectedClassroomId === 'parent_practice') {
+        if (parentUserId) {
+          query = query.eq('teacher_id', parentUserId).is('classroom_id', null);
+        } else {
+          setAssignments([]);
+          setLoading(false);
+          return;
+        }
+      } else {
+        query = query.eq('classroom_id', selectedClassroomId);
+      }
+
+      const { data: assignData, error: assignErr } = await query.order('created_at', { ascending: false });
 
       if (assignErr) throw assignErr;
 
@@ -76,8 +130,8 @@ export default function Assignments() {
       // If submitted, open evaluation view
       setSelectedSubmission(assign.submission);
     } else {
-      // Otherwise, go to writing workspace
-      navigate(`/write/${assign.format}?assignment=${assign.id}`);
+      // Otherwise, go to writing workspace with classroom context
+      navigate(`/write/${assign.format}?assignment=${assign.id}&classroom=${selectedClassroomId}`);
     }
   };
 
@@ -96,6 +150,38 @@ export default function Assignments() {
       <div className="assignments-header">
         <h1>🏫 My Classroom Assignments</h1>
         <p>Complete writing challenges posted by your teacher and get friendly AI reviews!</p>
+        
+        {/* Class Selection Dropdown */}
+        <div className="student-class-selector" style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <label htmlFor="student-class-select" style={{ fontWeight: '600', fontSize: '1rem', color: '#8f9bb3' }}>My Class:</label>
+          <select
+            id="student-class-select"
+            value={selectedClassroomId}
+            onChange={(e) => {
+              setSelectedClassroomId(e.target.value);
+              localStorage.setItem('student_classroom_id', e.target.value);
+            }}
+            style={{
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: '#1a1a2e',
+              color: '#fff',
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="">-- Select Class --</option>
+            {profile?.parent_email && (
+              <option value="parent_practice">🏠 Practice Tasks (from Parent)</option>
+            )}
+            {classrooms.map((cls) => (
+              <option key={cls.id} value={cls.id}>
+                🏫 {cls.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {loading ? (

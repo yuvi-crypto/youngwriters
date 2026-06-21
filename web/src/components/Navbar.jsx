@@ -12,22 +12,34 @@ export default function Navbar() {
   const { xp, badges } = useAppStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const isParent = profile?.role === 'parent';
+  const isTeacher = profile?.role === 'teacher';
+  const isChild = profile?.role === 'child';
+
   // Build nav links dynamically based on user role
   const navLinks = [
-    { path: '/home',      icon: FiHome,   label: 'Home' },
-    ...(profile?.role === 'teacher' 
+    ...(isParent 
+      ? [{ path: '/parent', icon: FiHome, label: 'Parent Dashboard' }] 
+      : [{ path: '/home',      icon: FiHome,   label: 'Home' }]
+    ),
+    ...(isTeacher 
       ? [{ path: '/teacher', icon: FiBookOpen, label: 'Teacher Portal' }] 
       : []
     ),
-    ...(profile?.role === 'child' 
+    ...(isChild 
       ? [{ path: '/assignments', icon: FiBookOpen, label: 'Assignments' }] 
       : []
     ),
-    { path: '/write',     icon: FiEdit3,  label: 'Write' },
-    { path: '/lab',       icon: FiCpu,    label: 'Lab' },
-    { path: '/community', icon: FiUsers,  label: 'Community' },
-    { path: '/journal',   icon: FiBook,   label: 'My Journal' },
-    { path: '/contests',  icon: FiAward,  label: 'Contests' },
+    ...(isChild 
+      ? [
+          { path: '/write',     icon: FiEdit3,  label: 'Write' },
+          { path: '/lab',       icon: FiCpu,    label: 'Lab' },
+          { path: '/journal',   icon: FiBook,   label: 'My Journal' },
+          { path: '/contests',  icon: FiAward,  label: 'Contests' }
+        ]
+      : []
+    ),
+    { path: '/community', icon: FiUsers,  label: 'Community' }
   ];
 
   const handleLogout = async () => {
@@ -44,7 +56,7 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
         {/* Logo */}
-        <Link to="/home" className="navbar-logo">
+        <Link to={isParent ? "/parent" : isTeacher ? "/teacher" : "/home"} className="navbar-logo">
           <span className="navbar-logo-emoji">✍️</span>
           <span className="navbar-logo-text">Young<span>Writers</span></span>
         </Link>
@@ -66,15 +78,17 @@ export default function Navbar() {
         {/* Right side */}
         <div className="navbar-right">
           {/* Progress Pill */}
-          <div className="navbar-progress-pill hide-mobile">
-            <span>⚡ {xp} XP</span>
-            {badges.length > 0 && (
-              <>
-                <span className="pill-divider">|</span>
-                <span>🏅 {badges.length}</span>
-              </>
-            )}
-          </div>
+          {isChild && (
+            <div className="navbar-progress-pill hide-mobile">
+              <span>⚡ {xp} XP</span>
+              {badges.length > 0 && (
+                <>
+                  <span className="pill-divider">|</span>
+                  <span>🏅 {badges.length}</span>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Avatar */}
           <button className="navbar-avatar" onClick={() => navigate('/settings')} title="Settings & Profile">

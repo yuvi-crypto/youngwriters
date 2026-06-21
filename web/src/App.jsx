@@ -18,6 +18,7 @@ import Settings from './pages/Settings';
 import ImageSprint from './pages/ImageSprint';
 import AdminPanel from './pages/AdminPanel';
 import Lab from './pages/Lab';
+import ParentDashboard from './pages/ParentDashboard';
 
 // Teacher Pages
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
@@ -74,6 +75,26 @@ function TeacherProtected({ children }) {
   return children;
 }
 
+// ── Student Protected Route ──────────────────────────────────
+function StudentProtected({ children }) {
+  const { user, profile, isLoading } = useAuthStore();
+  if (isLoading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (profile?.role !== 'child') {
+    return <Navigate to={profile?.role === 'parent' ? '/parent' : '/teacher'} replace />;
+  }
+  return children;
+}
+
+// ── Parent Protected Route ───────────────────────────────────
+function ParentProtected({ children }) {
+  const { user, profile, isLoading } = useAuthStore();
+  if (isLoading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (profile?.role !== 'parent') return <Navigate to="/home" replace />;
+  return children;
+}
+
 // ── App Layout (with Navbar) ─────────────────────────────────
 function AppLayout({ children }) {
   return (
@@ -118,39 +139,55 @@ export default function App() {
 
   // Supabase auth listener — also wires Mixpanel identity
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const meta = session.user.user_metadata || {};
-        const profile = {
-          uid: session.user.id,
-          name: meta.name || session.user.email?.split('@')[0] || 'Writer',
-          email: session.user.email,
-          role: meta.role || 'child',
-          age: meta.age || 12,
-          language: meta.language || 'en',
+    async function syncProfile(user) {
+      if (!user) return null;
+      try {
+        const { data: dbProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+        
+        const meta = user.user_metadata || {};
+        return {
+          uid: user.id,
+          name: dbProfile?.name || meta.name || user.email?.split('@')[0] || 'Writer',
+          email: dbProfile?.email || user.email,
+          role: dbProfile?.role || meta.role || 'child',
+          age: dbProfile?.age || meta.age || 12,
+          language: dbProfile?.language || meta.language || 'en',
+          username: dbProfile?.username || meta.username || null,
+          accountType: dbProfile?.account_type || meta.account_type || 'email_account',
+          teacherId: dbProfile?.teacher_id || meta.teacher_id || null,
+          parent_email: dbProfile?.parent_email || meta.parentEmail || null,
         };
+      } catch (e) {
+        console.error('Error syncing profile:', e);
+        return null;
+      }
+    }
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const profile = await syncProfile(session.user);
         setUser(session.user);
-        setProfile(profile);
-        identifyUser(session.user.id, profile);
+        if (profile) {
+          setProfile(profile);
+          identifyUser(session.user.id, profile);
+        }
       }
       setLoading(false);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (session?.user) {
-          const meta = session.user.user_metadata || {};
-          const profile = {
-            uid: session.user.id,
-            name: meta.name || session.user.email?.split('@')[0] || 'Writer',
-            email: session.user.email,
-            role: meta.role || 'child',
-            age: meta.age || 12,
-            language: meta.language || 'en',
-          };
+          const profile = await syncProfile(session.user);
           setUser(session.user);
-          setProfile(profile);
-          identifyUser(session.user.id, profile);
+          if (profile) {
+            setProfile(profile);
+            identifyUser(session.user.id, profile);
+          }
         } else {
           setUser(null);
           setProfile(null);
@@ -193,21 +230,24 @@ export default function App() {
 
         {/* Protected (Students / Parents) */}
         <Route path="/home" element={<Protected><AppLayout><Home /></AppLayout></Protected>} />
-        <Route path="/write" element={<Protected><AppLayout><WriteSelect /></AppLayout></Protected>} />
-        <Route path="/write/image-sprint" element={<Protected><AppLayout><ImageSprint /></AppLayout></Protected>} />
-        <Route path="/write/:format" element={<Protected><AppLayout><Write /></AppLayout></Protected>} />
+        <Route path="/write" element={<StudentProtected><AppLayout><WriteSelect /></AppLayout></StudentProtected>} />
+        <Route path="/write/image-sprint" element={<StudentProtected><AppLayout><ImageSprint /></AppLayout></StudentProtected>} />
+        <Route path="/write/:format" element={<StudentProtected><AppLayout><Write /></AppLayout></StudentProtected>} />
         <Route path="/community" element={<Protected><AppLayout><Community /></AppLayout></Protected>} />
-        <Route path="/journal" element={<Protected><AppLayout><Journal /></AppLayout></Protected>} />
-        <Route path="/contests" element={<Protected><AppLayout><Contests /></AppLayout></Protected>} />
+        <Route path="/journal" element={<StudentProtected><AppLayout><Journal /></AppLayout></StudentProtected>} />
+        <Route path="/contests" element={<StudentProtected><AppLayout><Contests /></AppLayout></StudentProtected>} />
         <Route path="/settings" element={<Protected><AppLayout><Settings /></AppLayout></Protected>} />
-        <Route path="/assignments" element={<Protected><AppLayout><Assignments /></AppLayout></Protected>} />
-        <Route path="/lab" element={<Protected><AppLayout><Lab /></AppLayout></Protected>} />
+        <Route path="/assignments" element={<StudentProtected><AppLayout><Assignments /></AppLayout></StudentProtected>} />
+        <Route path="/lab" element={<StudentProtected><AppLayout><Lab /></AppLayout></StudentProtected>} />
         
         {/* Teacher Specific Routes (Protected) */}
         <Route path="/teacher" element={<TeacherProtected><TeacherDashboard /></TeacherProtected>} />
         <Route path="/teacher/assignments/new" element={<TeacherProtected><AssignmentCreate /></TeacherProtected>} />
         <Route path="/teacher/assignments/:id" element={<TeacherProtected><AssignmentDetail /></TeacherProtected>} />
         
+        {/* Parent Specific Routes (Protected) */}
+        <Route path="/parent" element={<ParentProtected><AppLayout><ParentDashboard /></AppLayout></ParentProtected>} />
+
         {/* Admin Route */}
         <Route path="/admin" element={<Protected><AdminPanel /></Protected>} />
 
