@@ -55,3 +55,20 @@ ALTER TABLE public.submissions DROP CONSTRAINT IF EXISTS submissions_student_id_
 ALTER TABLE public.submissions 
   ADD CONSTRAINT submissions_student_id_fkey 
   FOREIGN KEY (student_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+
+-- ── 6. Auto-confirm Student/Writer users to bypass email confirmation ──
+CREATE OR REPLACE FUNCTION public.confirm_student_users()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (NEW.raw_user_meta_data->>'role' = 'child' OR NEW.raw_user_meta_data->>'account_type' = 'username_account') THEN
+    NEW.email_confirmed_at = COALESCE(NEW.email_confirmed_at, NOW());
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_before_insert ON auth.users;
+CREATE TRIGGER on_auth_user_before_insert
+  BEFORE INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.confirm_student_users();
+

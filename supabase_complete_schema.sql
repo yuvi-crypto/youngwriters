@@ -389,7 +389,23 @@ CREATE TRIGGER submissions_updated_at
   BEFORE UPDATE ON submissions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
--- ── 16. Trigger: Auto-create Profile on Signup ───────────────
+-- ── 16. Trigger: Auto-confirm Student Users (Username accounts) ──
+CREATE OR REPLACE FUNCTION public.confirm_student_users()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (NEW.raw_user_meta_data->>'role' = 'child' OR NEW.raw_user_meta_data->>'account_type' = 'username_account') THEN
+    NEW.email_confirmed_at = COALESCE(NEW.email_confirmed_at, NOW());
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_before_insert ON auth.users;
+CREATE TRIGGER on_auth_user_before_insert
+  BEFORE INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.confirm_student_users();
+
+-- ── 17. Trigger: Auto-create Profile on Signup ───────────────
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
