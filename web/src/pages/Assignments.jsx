@@ -18,27 +18,57 @@ export default function Assignments() {
 
   useEffect(() => {
     async function fetchClassroomsList() {
+      if (!profile) return;
       try {
-        const { data, error } = await supabase
-          .from('classrooms')
-          .select('*')
-          .order('name');
-        if (error) throw error;
-        setClassrooms(data || []);
+        let classroomsData = [];
+        
+        if (profile.teacherId) {
+          // Find the teacher's profile/UUID
+          const { data: teacherProfile, error: tErr } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('teacher_id', profile.teacherId)
+            .eq('role', 'teacher')
+            .maybeSingle();
+
+          if (tErr) throw tErr;
+
+          if (teacherProfile) {
+            const { data, error } = await supabase
+              .from('classrooms')
+              .select('*')
+              .eq('teacher_id', teacherProfile.id)
+              .order('name');
+            if (error) throw error;
+            classroomsData = data || [];
+          }
+        } else {
+          // If student has no teacher link, don't show any classes (except parent practice)
+          classroomsData = [];
+        }
+
+        setClassrooms(classroomsData);
         
         const saved = localStorage.getItem('student_classroom_id');
-        if (saved) {
+        const isValidSaved = saved && (saved === 'parent_practice' || classroomsData.some(c => c.id === saved));
+        
+        if (isValidSaved) {
           setSelectedClassroomId(saved);
-        } else if (data && data.length > 0) {
-          setSelectedClassroomId(data[0].id);
-          localStorage.setItem('student_classroom_id', data[0].id);
+        } else if (classroomsData.length > 0) {
+          setSelectedClassroomId(classroomsData[0].id);
+          localStorage.setItem('student_classroom_id', classroomsData[0].id);
+        } else if (profile.parent_email) {
+          setSelectedClassroomId('parent_practice');
+          localStorage.setItem('student_classroom_id', 'parent_practice');
+        } else {
+          setSelectedClassroomId('');
         }
       } catch (err) {
         console.error('Failed to load classrooms list:', err);
       }
     }
     fetchClassroomsList();
-  }, []);
+  }, [profile]);
 
   useEffect(() => {
     fetchStudentAssignments();
@@ -106,18 +136,7 @@ export default function Assignments() {
         };
       });
 
-      // Filter by target age band to keep relevant for child
-      const studentAge = profile?.age || 10;
-      const filtered = mapped.filter((a) => {
-        if (!a.target_age_band || a.target_age_band === 'all') return true;
-        const [min, max] = a.target_age_band.split('-').map(Number);
-        if (min && max) {
-          return studentAge >= min && studentAge <= max;
-        }
-        return true;
-      });
-
-      setAssignments(filtered);
+      setAssignments(mapped);
     } catch (e) {
       toast.error('Failed to load assignments: ' + e.message);
     } finally {
