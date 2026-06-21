@@ -8,6 +8,23 @@ export default function Home() {
   const { profile } = useAuthStore();
   const { pieces, badges, xp, streak } = useAppStore();
 
+  if (!profile) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '80vh',
+        fontFamily: "'Nunito', sans-serif",
+        fontSize: '1.2rem',
+        fontWeight: 600,
+        color: 'var(--text-muted)'
+      }}>
+        Loading your workspace...
+      </div>
+    );
+  }
+
   if (profile?.role === 'parent') {
     return <Navigate to="/parent" replace />;
   }

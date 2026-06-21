@@ -20,11 +20,9 @@ export default function Navbar() {
   const navLinks = [
     ...(isParent 
       ? [{ path: '/parent', icon: FiHome, label: 'Parent Dashboard' }] 
+      : isTeacher
+      ? [{ path: '/teacher', icon: FiHome, label: 'Teacher Portal' }]
       : [{ path: '/home',      icon: FiHome,   label: 'Home' }]
-    ),
-    ...(isTeacher 
-      ? [{ path: '/teacher', icon: FiBookOpen, label: 'Teacher Portal' }] 
-      : []
     ),
     ...(isChild 
       ? [{ path: '/assignments', icon: FiBookOpen, label: 'Assignments' }] 

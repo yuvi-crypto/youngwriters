@@ -142,44 +142,102 @@ export default function App() {
     async function syncProfile(user) {
       if (!user) return null;
       try {
-        const { data: dbProfile } = await supabase
+        let { data: dbProfile } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .maybeSingle();
-        
-        const meta = user.user_metadata || {};
-        const role = dbProfile?.role || meta.role || 'child';
 
-        // Check if Parent exists in student profiles parent_email
-        if (role === 'parent') {
-          const parentEmail = user.email;
-          const { data: linkedKids, error: linkErr } = await supabase
+        // 1. Retrieve any pending OAuth metadata from localStorage
+        const oauthRole = localStorage.getItem('yw_oauth_role');
+        const oauthLanguage = localStorage.getItem('yw_oauth_language');
+        const oauthTeacherId = localStorage.getItem('yw_oauth_teacher_id');
+
+        // Clean up localStorage immediately so we don't repeat the sync
+        if (oauthRole) {
+          localStorage.removeItem('yw_oauth_role');
+          localStorage.removeItem('yw_oauth_language');
+          localStorage.removeItem('yw_oauth_teacher_id');
+        }
+
+        // 2. Check if this email is a linked parent email in any child's profile
+        let isLinkedParent = false;
+        if (user.email) {
+          const { data: linkedKids } = await supabase
             .from('profiles')
             .select('id')
-            .eq('parent_email', parentEmail)
+            .eq('parent_email', user.email)
             .limit(1);
-
-          if (linkErr) throw linkErr;
-
-          if (!linkedKids || linkedKids.length === 0) {
-            await supabase.auth.signOut();
-            toast.error("No student is associated with this email address. Please contact your child's teacher. 🚫", { duration: 6000 });
-            return null;
+          if (linkedKids && linkedKids.length > 0) {
+            isLinkedParent = true;
           }
+        }
+
+        // 3. Determine the final target role
+        // Prioritize explicit oauthRole, then linked parent auto-detection, then existing dbProfile/meta, default to 'child'
+        let targetRole = dbProfile?.role || user.user_metadata?.role;
+
+        if (oauthRole) {
+          targetRole = oauthRole;
+        } else if (isLinkedParent && (!targetRole || targetRole === 'child')) {
+          targetRole = 'parent';
+        } else if (!targetRole) {
+          targetRole = 'child';
+        }
+
+        // 4. Update the profile and user metadata if they are missing or role/teacher_id has changed
+        if (!dbProfile || dbProfile.role !== targetRole || (targetRole === 'teacher' && oauthTeacherId && dbProfile.teacher_id !== oauthTeacherId)) {
+          const updates = {
+            id: user.id,
+            name: dbProfile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            role: targetRole,
+            language: oauthLanguage || dbProfile?.language || user.user_metadata?.language || 'en',
+            account_type: 'email_account',
+            email: user.email,
+            teacher_id: targetRole === 'teacher' ? (oauthTeacherId || dbProfile?.teacher_id || user.user_metadata?.teacher_id) : null,
+          };
+
+          const { data: updatedProfile, error: updateErr } = await supabase
+            .from('profiles')
+            .upsert(updates)
+            .select('*')
+            .maybeSingle();
+
+          if (updateErr) {
+            console.error('Error updating profile with OAuth fields:', updateErr);
+          } else if (updatedProfile) {
+            dbProfile = updatedProfile;
+          }
+
+          // Also keep Auth user metadata in sync
+          await supabase.auth.updateUser({
+            data: {
+              role: targetRole,
+              language: updates.language,
+              teacher_id: updates.teacher_id,
+              account_type: 'email_account',
+            }
+          });
+        }
+
+        // 5. If role is parent, double check that they are actually linked to at least one student
+        if (targetRole === 'parent' && !isLinkedParent) {
+          await supabase.auth.signOut();
+          toast.error("No student is associated with this email address. Please contact your child's teacher. 🚫", { duration: 6000 });
+          return null;
         }
 
         return {
           uid: user.id,
-          name: dbProfile?.name || meta.name || user.email?.split('@')[0] || 'Writer',
+          name: dbProfile?.name || user.user_metadata?.name || user.email?.split('@')[0] || 'Writer',
           email: dbProfile?.email || user.email,
-          role: dbProfile?.role || meta.role || 'child',
-          age: dbProfile?.age || meta.age || 12,
-          language: dbProfile?.language || meta.language || 'en',
-          username: dbProfile?.username || meta.username || null,
-          accountType: dbProfile?.account_type || meta.account_type || 'email_account',
-          teacherId: dbProfile?.teacher_id || meta.teacher_id || null,
-          parent_email: dbProfile?.parent_email || meta.parentEmail || null,
+          role: targetRole,
+          age: dbProfile?.age || user.user_metadata?.age || 12,
+          language: dbProfile?.language || user.user_metadata?.language || 'en',
+          username: dbProfile?.username || user.user_metadata?.username || null,
+          accountType: dbProfile?.account_type || user.user_metadata?.account_type || 'email_account',
+          teacherId: dbProfile?.teacher_id || user.user_metadata?.teacher_id || null,
+          parent_email: dbProfile?.parent_email || user.user_metadata?.parentEmail || null,
         };
       } catch (e) {
         console.error('Error syncing profile:', e);

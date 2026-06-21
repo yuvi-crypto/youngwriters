@@ -180,6 +180,15 @@ export default function Signup() {
     }
     setLoading(true);
     try {
+      // Save pending OAuth fields to localStorage so syncProfile can apply them upon redirect
+      localStorage.setItem('yw_oauth_role', role);
+      localStorage.setItem('yw_oauth_language', form.language);
+      if (role === 'teacher') {
+        localStorage.setItem('yw_oauth_teacher_id', form.teacherId.trim());
+      } else {
+        localStorage.removeItem('yw_oauth_teacher_id');
+      }
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
