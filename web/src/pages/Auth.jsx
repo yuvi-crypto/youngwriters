@@ -175,6 +175,10 @@ export default function Signup() {
   };
 
   const handleGoogleSignup = async () => {
+    if (role === 'teacher' && !form.teacherId.trim()) {
+      toast.error('Teacher ID is required');
+      return;
+    }
     setLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -183,6 +187,8 @@ export default function Signup() {
           redirectTo: `${window.location.origin}/home`,
           data: {
             role: role,
+            language: form.language,
+            teacher_id: role === 'teacher' ? form.teacherId.trim() : null,
             account_type: 'email_account',
           }
         }
@@ -242,26 +248,26 @@ export default function Signup() {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="auth-form">
-              {/* Name */}
-              <div className="input-group">
-                <label className="input-label">Your name *</label>
-                <div className="input-icon-wrap">
-                  <FiUser className="input-icon" />
-                  <input
-                    className="input input-with-icon"
-                    type="text"
-                    name="name"
-                    placeholder={isChild ? 'E.g. Arjun' : 'Full name'}
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                  />
+            {isChild ? (
+              <form onSubmit={handleSubmit} className="auth-form">
+                {/* Name */}
+                <div className="input-group">
+                  <label className="input-label">Your name *</label>
+                  <div className="input-icon-wrap">
+                    <FiUser className="input-icon" />
+                    <input
+                      className="input input-with-icon"
+                      type="text"
+                      name="name"
+                      placeholder="E.g. Arjun"
+                      value={form.name}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Username (children only) */}
-              {isChild && (
+                {/* Username (children only) */}
                 <div className="input-group">
                   <label className="input-label">
                     Choose a username *
@@ -286,98 +292,80 @@ export default function Signup() {
                   )}
                   <span className="input-hint-small">Letters, numbers and _ only · 3–20 characters</span>
                 </div>
-              )}
 
-              {/* Age (child only) */}
-              {isChild && (
+                {/* Age (child only) */}
                 <div className="input-group">
                   <label className="input-label">Your age *</label>
                   <select className="input" name="age" value={form.age} onChange={handleChange}>
                     {AGES.map((a) => <option key={a} value={a}>{a} years old</option>)}
                   </select>
                 </div>
-              )}
 
-              {/* Language */}
-              <div className="input-group">
-                <label className="input-label">Preferred language</label>
-                <select className="input" name="language" value={form.language} onChange={handleChange}>
-                  <option value="en">🇬🇧 English</option>
-                  <option value="te">🇮🇳 తెలుగు (Telugu)</option>
-                  <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
-                </select>
-              </div>
-
-              {/* Email (teachers and parents only) */}
-              {!isChild && (
+                {/* Language */}
                 <div className="input-group">
-                  <label className="input-label">Email address *</label>
+                  <label className="input-label">Preferred language</label>
+                  <select className="input" name="language" value={form.language} onChange={handleChange}>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+                    <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+                  </select>
+                </div>
+
+                {/* Password */}
+                <div className="input-group">
+                  <label className="input-label">Password *</label>
                   <div className="input-icon-wrap">
-                    <FiMail className="input-icon" />
+                    <FiLock className="input-icon" />
                     <input
-                      className="input input-with-icon"
-                      type="email"
-                      name="email"
-                      placeholder="your@email.com"
-                      value={form.email}
+                      className="input input-with-icon input-with-suffix"
+                      type={showPass ? 'text' : 'password'}
+                      name="password"
+                      placeholder="At least 6 characters"
+                      value={form.password}
                       onChange={handleChange}
                       required
                     />
+                    <button type="button" className="input-suffix-btn" onClick={() => setShowPass(!showPass)}>
+                      {showPass ? <FiEyeOff /> : <FiEye />}
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {/* Teacher ID (teachers only) */}
-              {role === 'teacher' && (
+                <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
+                  {loading ? '⏳ Creating account...' : '🚀 Create my account'}
+                </button>
+              </form>
+            ) : (
+              <div className="auth-form">
+                {/* Language */}
                 <div className="input-group">
-                  <label className="input-label">Teacher ID *</label>
-                  <div className="input-icon-wrap">
-                    <FiUser className="input-icon" />
-                    <input
-                      className="input input-with-icon"
-                      type="text"
-                      name="teacherId"
-                      placeholder="e.g. TEA-482"
-                      value={form.teacherId}
-                      onChange={handleChange}
-                      required
-                    />
+                  <label className="input-label">Preferred language</label>
+                  <select className="input" name="language" value={form.language} onChange={handleChange}>
+                    <option value="en">🇬🇧 English</option>
+                    <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+                    <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+                  </select>
+                </div>
+
+                {/* Teacher ID (teachers only) */}
+                {role === 'teacher' && (
+                  <div className="input-group">
+                    <label className="input-label">Teacher ID *</label>
+                    <div className="input-icon-wrap">
+                      <FiUser className="input-icon" />
+                      <input
+                        className="input input-with-icon"
+                        type="text"
+                        name="teacherId"
+                        placeholder="e.g. TEA-482"
+                        value={form.teacherId}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Password */}
-              <div className="input-group">
-                <label className="input-label">Password *</label>
-                <div className="input-icon-wrap">
-                  <FiLock className="input-icon" />
-                  <input
-                    className="input input-with-icon input-with-suffix"
-                    type={showPass ? 'text' : 'password'}
-                    name="password"
-                    placeholder="At least 6 characters"
-                    value={form.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  <button type="button" className="input-suffix-btn" onClick={() => setShowPass(!showPass)}>
-                    {showPass ? <FiEyeOff /> : <FiEye />}
-                  </button>
-                </div>
-              </div>
-
-              <button type="submit" className="btn btn-primary w-full btn-lg" disabled={loading}>
-                {loading ? '⏳ Creating account...' : '🚀 Create my account'}
-              </button>
-            </form>
-
-            {!isChild && (
-              <>
-                <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                  <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
-                  <span>or</span>
-                  <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--border)' }}></div>
-                </div>
                 <button
                   type="button"
                   onClick={handleGoogleSignup}
@@ -397,6 +385,7 @@ export default function Signup() {
                     fontSize: '0.95rem',
                     fontWeight: '500',
                     transition: 'all 0.2s',
+                    marginTop: '1.5rem',
                   }}
                 >
                   <svg style={{ width: '18px', height: '18px' }} viewBox="0 0 24 24">
@@ -419,7 +408,7 @@ export default function Signup() {
                   </svg>
                   Register with Google
                 </button>
-              </>
+              </div>
             )}
 
             <p className="auth-footer-text">
